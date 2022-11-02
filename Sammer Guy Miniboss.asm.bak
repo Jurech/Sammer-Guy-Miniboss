@@ -722,11 +722,11 @@ db $30, $30, $20, $4F, $10, $10
 org !GraphSp ;Free Space for Graphics
 GFX:
 .Sword
-incbin ".\Graphics\Sword.gfx"
+incbin ".\Sword.gfx"
 .Boss
-incbin ".\Graphics\Sammer Guy.gfx"
+incbin ".\Sammer Guy.gfx"
 .Shield
-incbin ".\Graphics\Sammer Guy Shield.gfx"
+incbin ".\Sammer Guy Shield.gfx"
 .Shuriken
-incbin ".\Graphics\Shuriken.gfx"
+incbin ".\Shuriken.gfx"
 print pc, " - End of GFX"
