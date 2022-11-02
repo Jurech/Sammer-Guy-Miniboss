@@ -1,11 +1,10 @@
-;Enemies.asm Template
+; Sammer Guy Miniboss.asm
 ;----------------------------
 lorom
 
 !A0Free = $A0F813	;For enemy headers
 !A2Free = $A2F498	;AI code
 !A3Free = $A3F3F5	;AI code
-!A8Free = $A8F9BE	;ScyZebs
 !B4Free = $B4F4E0	;For drops/weaknesses
 
 !GraphSp  = $B89000 ;Free Space for Graphics
