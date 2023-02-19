@@ -145,8 +145,19 @@ JMP (.STATEPOINTERS,x)			; Jump to states based on STATEPOINTERS
 
 ..Kill
 TYX 
+LDA $0F8C,x : BEQ ..Dying		; Check to see if this enemy's death has already been initialized
 STZ $0F8C,x						; Set this enemy's HP to 0
+STZ !timer,x					; Set this enemy's timer to 0
+..Dying
+LDA !timer,x					; Load this enemy's timer to A
+ASL #3 : TAY					; Shift this left by 3 to align with quadratic speed chart and move to Y for indexing
+LDA $838F,y	: STA $12			; Load the subpixel speed and apply it
+INY #2 : LDA $838F,y : STA $14	; Realign with pixel speed, load the pixel speed, and apply it
+JSL $A0C788						; Move enemy down by this speed
+BCC ..NoFloorHit				; If the enemy has not hit the ground, don't prematurely kill it
 JSL $A3802D						; Call Enemy Shot AI to kill it
+..NoFloorHit
+INC !timer,x					; Increment this enemy's timer
 RTL
 
 ..Stopped
@@ -525,6 +536,7 @@ JSL $A0A643						; Call Enemy Shot AI to kill it
 LDX #$01C0 : STX $0E54			; Trick the game to thinking it's working with Enemy 7 to remotely kill it
 STZ $0F8C,x						; Set this enemy's HP to 0
 JSL $A0A643						; Call Enemy Shot AI to kill it
+STZ $0E54						; Restore the proper enemy index at this location
 ..NotDead
 RTL
 
