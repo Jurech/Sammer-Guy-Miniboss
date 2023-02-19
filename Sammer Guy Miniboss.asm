@@ -55,7 +55,7 @@ print pc, " - Shuriken Enemy Header"
 ;       Palette              Damage        Y Radius        Hurt AI Time   Boss Value             Number of parts  Main AI       Hurt AI       Xray AI      Unused         PB AI        Unused       Touch AI        Unused                 Layer Priority           Weakness Pointer
 ;GFX Size |             Health |      X Radius  |       AI Bank |     Hurt SFX  |  Setup              |   Unused    |  Grapple AI |  Frozen AI  | Death Anim. |   Unused    |   Unknown   |   Unused    |   Shot AI   |   GFX Address            | Drops Pointer        |           Name Pointer
 ;  |      |             |      |      |      |          |    |        |      |      |                 |      |      |      |      |      |      |      |      |      |      |      |      |      |      |      |      |          |               |        |             |            |
-DW $0400, Shuriken_PAL, $0100, $0032, $0008, $0008 : DB $A2, $00 : DW $0000, $0000, Shuriken_SETUPAI, $0001, $0000, $B40F, $800F, $804C, $8041, $0000, $0000, $0000, $0000, $804C, $0000, $0000, $0000, $8023, $802D, $0000 : DL GFX_Shuriken : DB $02 : DW DROPS_Shuriken, WEAK_Shuriken, $E1DB
+DW $0400, Shuriken_PAL, $0100, $0032, $0008, $0008 : DB $A2, $00 : DW $0000, $0000, Shuriken_SETUPAI, $0001, $0000, $B40F, $800F, $804C, $8041, $0000, $0000, $0000, $0000, $8037, $0000, $0000, $0000, $8023, $802D, $0000 : DL GFX_Shuriken : DB $02 : DW DROPS_Shuriken, WEAK_Shuriken, $E1DB
 
 }
 
@@ -150,6 +150,13 @@ STZ $0F8C,x						; Set this enemy's HP to 0
 STZ !timer,x					; Set this enemy's timer to 0
 ..Dying
 LDA !timer,x					; Load this enemy's timer to A
+SEC : SBC #$0010 : TAY			; Add a 16 frame delay before the swords fall. Store A in Y
+LDA $0FB4,x : BIT #$0004		; If sword is on the outer layer, add an extra delay
+BEQ ..NoExtraDelay
+TYA : SEC : SBC #$0010 : TAY
+..NoExtraDelay
+TYA
+BMI ..NoFloorHit
 ASL #3 : TAY					; Shift this left by 3 to align with quadratic speed chart and move to Y for indexing
 LDA $838F,y	: STA $12			; Load the subpixel speed and apply it
 INY #2 : LDA $838F,y : STA $14	; Realign with pixel speed, load the pixel speed, and apply it
@@ -741,7 +748,7 @@ db $82, $82, $82, $82, $82, $82, $82, $82, $82, $82, $82, $82, $82, $02, $02, $0
 .Shield
 db $80, $80, $80, $80, $80, $80, $80, $80, $80, $80, $80, $80, $80, $00, $00, $00, $00, $00, $00, $00, $00, $00
 .Shuriken
-db $82, $82, $82, $82, $82, $82, $82, $82, $82, $82, $82, $82, $82, $02, $02, $00, $02, $02, $00, $02, $02, $02
+db $82, $82, $82, $82, $82, $82, $82, $82, $82, $82, $82, $82, $82, $02, $02, $04, $02, $02, $00, $02, $02, $02
 
 
 DROPS:
