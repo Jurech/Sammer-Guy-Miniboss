@@ -2,12 +2,12 @@
 ;----------------------------
 lorom
 
-!A0Free = $A0F813	;For enemy headers
-!A2Free = $A2F498	;AI code
-!A3Free = $A3F3F5	;AI code
-!B4Free = $B4F4E0	;For drops/weaknesses
+!A0Free = $A0F813	; For enemy headers
+!A2Free = $A2F498	; AI code
+!A3Free = $A3F3F5	; AI code
+!B4Free = $B4F4E0	; For drops/weaknesses
 
-!GraphSp  = $B89000 ;Free Space for Graphics
+!GraphSp  = $B89000 ; Free Space for Graphics
 
 !sleep = $812F
 
@@ -348,19 +348,38 @@ STA !floatState : PHA			; Invert the acceleration if at peak speed and put A bac
 ..ShurikenCheck
 PLA								; Get A back from the stack regardless of the outcome of the branch
 LDA !timer
-CMP #$0040 : BNE ..NoThrow		; If timer = 40, throw shuriken
-LDY #$0180						; Load index of enemy 6
-LDA $0F7A,y						; Load X position of enemy 6 to Y
+CMP #$0040 : BNE ..SkipThrow	; If timer = 40, throw shuriken
+JSL $808111 : PHA				; Randomly determine whether to throw left or right and store it on the stack
+LDA !swordsSpawned 				; Check to see which sets of swords have spawned
+CMP #$0002 : BNE ..OnlyOne		; If only one set of swords have been spawned, only check to throw the first shuriken	
+
+LDY #$01C0						; Load index of enemy 7 to Y, the second shuriken
+LDA $0F7A,y						; Load X position of enemy 7 to A
+CMP #$0100 : BMI ..OnlyOne		; If enemy is already in area, don't throw again
+LDA $0F7A : STA $0F7A,y			; X position of enemy 7 = X position of enemy 0
+LDA $0F7E : STA $0F7E,y			; Y position of enemy 7 = Y position of enemy 0
+PLA	: BMI ..ThrowDnLeft			; Get throw direction from stack
+PHA : LDA #$0070 : STA $0FB4,y	; Set direction of enemy 7 to down right and put throw direction back on stack
+BRA ..OnlyOne
+..ThrowDnLeft
+PHA : LDA #$0010 : STA $0FB4,y	; Set direction of enemy 7 to down left and put throw direction back on stack
+
+
+..OnlyOne
+LDY #$0180						; Load index of enemy 6 to Y, the first shuriken
+LDA $0F7A,y						; Load X position of enemy 6 to A
 CMP #$0100 : BMI ..NoThrow		; If enemy is already in area, don't throw again
 LDA $0F7A : STA $0F7A,y			; X position of enemy 6 = X position of enemy 0
 LDA $0F7E : STA $0F7E,y			; Y position of enemy 6 = Y position of enemy 0
-JSL $808111	: BMI ..ThrowLeft	; Randomly determine whether to throw left or right
-LDA #$0090 : STA $0FB4,y		; Set direction of enemy 6 to up right
+PLA	: BMI ..ThrowUpLeft			; Get throw direction from stack
+PHA : LDA #$0090 : STA $0FB4,y	; Set direction of enemy 6 to up right and put throw direction back on stack
 BRA ..NoThrow
-..ThrowLeft
-LDA #$00F0 : STA $0FB4,y		; Set direction of enemy 6 to up left
+..ThrowUpLeft
+PHA : LDA #$00F0 : STA $0FB4,y	; Set direction of enemy 6 to up left and put throw direction back on stack
 
 ..NoThrow
+PLA 							; Take throw direction off the stack if it was ever determined
+..SkipThrow
 ; Keep the boss from moving swords into a wall
 {
 LDA $0F7A						; Get enemy X position
