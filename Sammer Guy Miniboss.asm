@@ -519,6 +519,12 @@ LDA $0F8C,x	: BNE ..NotDead		; Load enemy health to see if it's dead
 LDA #$0003
 JSL $A0A3AF						; Run death animation
 JSL $A0B92B						; Run multi-drop routine TO DO: MAKE OWN VERSION OF THIS
+LDX #$0180 : STX $0E54			; Trick the game to thinking it's working with Enemy 6 to remotely kill it
+STZ $0F8C,x						; Set this enemy's HP to 0
+JSL $A0A643						; Call Enemy Shot AI to kill it
+LDX #$01C0 : STX $0E54			; Trick the game to thinking it's working with Enemy 7 to remotely kill it
+STZ $0F8C,x						; Set this enemy's HP to 0
+JSL $A0A643						; Call Enemy Shot AI to kill it
 ..NotDead
 RTL
 
