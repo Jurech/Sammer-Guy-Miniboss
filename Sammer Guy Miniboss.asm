@@ -11,14 +11,15 @@ lorom
 
 !sleep = $812F
 
-!currHP = $0F8C			; Current HP of an enemy
-!timer = $0F90			; Enemy timer
-!state = $0FA8			; Enemy state pointer
-!minDis = $0FAA			; Minimum distance the boss can be from the walls 
-!bossLoc = $0FAC		; Variable indicating what state the boss' location is in
-!swordsSpawned = $0FAE	; A variable indicating which swords the boss has spawned
-!HPComparitor = $0FB0	; A variable used to store the initial max HP of the boss to compare it with the current HP for speed calculations
-!floatState = $0FB2		; A variable used to determine which direction the boss is floating in and how quickly
+!currHP = $0F8C				; Current HP of an enemy
+!timer = $0F90				; Enemy timer
+!state = $0FA8				; Enemy state pointer
+!minDis = $0FAA				; Minimum distance the boss can be from the walls 
+!bossLoc = $0FAC			; Variable indicating what state the boss' location is in
+!swordsSpawned = $0FAE		; A variable indicating which swords the boss has spawned
+!floatState = $0FB0			; A variable used to determine which direction the boss is floating in and how quickly
+
+!HPComparitor = EnemyHeaders_BossHeader+4	; A variable used to store the initial max HP of the boss to compare it with the current HP for speed calculations
 
 !state0 = #$0000
 !state2 = #$0002
@@ -33,24 +34,28 @@ lorom
 org !A0Free
 EnemyHeaders:
 {
+.SwordHeader
 print pc, " - Sword Enemy Header"
 ;       Palette             Damage        Y Radius        Hurt AI Time   Boss Value          Number of parts  Main AI              Hurt AI       Xray AI      Unused         PB AI        Unused       Touch AI        Unused                Layer Priority          Weakness Pointer
 ;GFX Size |          Health |      X Radius  |       AI Bank |     Hurt SFX  |  Setup           |   Unused    |         Grapple AI |  Frozen AI  | Death Anim. |   Unused    |   Unknown   |   Unused    |   Shot AI   |   GFX Address           | Drops Pointer       |          Name Pointer
 ;  |      |          |      |      |      |          |    |        |      |      |              |      |      |             |      |      |      |      |      |      |      |      |      |      |      |      |      |          |              |        |            |           |
 DW $0200, Sword_PAL, $0100, $0032, $0004, $0010 : DB $A3, $00 : DW $0000, $0000, Sword_SETUPAI, $0001, $0000, Sword_MAINAI, $804C, $804C, $8041, $0000, $0000, $0000, $0000, $804C, $0000, $0000, $0000, $8023, $802D, $0000 : DL GFX_Sword : DB $02 : DW DROPS_Sword, WEAK_Sword, $E1DB
 
+.BossHeader
 print pc, " - Boss Enemy Header"
 ;       Palette             Damage        Y Radius        Hurt AI Time   Boss Value         Number of parts  Main AI             Hurt AI       Xray AI      Unused         PB AI        Unused       Touch AI              Unused               Layer Priority         Weakness Pointer
 ;GFX Size |         Health  |      X Radius  |       AI Bank |     Hurt SFX  |  Setup          |   Unused    |        Grapple AI |  Frozen AI  | Death Anim. |   Unused    |   Unknown   |   Unused    |   Shot AI         |   GFX Address          | Drops Pointer      |         Name Pointer
 ;  |      |         |       |      |      |          |    |        |      |      |             |      |      |            |      |      |      |      |      |      |      |      |      |      |      |      |            |          |             |        |           |          |
 DW $0400, Boss_PAL, !maxHP, $0032, $0010, $0014 : DB $A3, $00 : DW $0000, $0000, Boss_SETUPAI, $0001, $0000, Boss_MAINAI, $804C, $804C, $8041, $0000, $0003, $0000, $0000, $804C, $0000, $0000, $0000, $8023, Boss_SHOTAI, $0000 : DL GFX_Boss : DB $02 : DW DROPS_Boss, WEAK_Boss, $E1DB
 
+.ShieldHeader
 print pc, " - Shield Enemy Header"
 ;       Palette              Damage        Y Radius        Hurt AI Time   Boss Value           Number of parts  Main AI               Hurt AI       Xray AI      Unused         PB AI        Unused       Touch AI        Unused                 Layer Priority           Weakness Pointer
 ;GFX Size |           Health |      X Radius  |       AI Bank |     Hurt SFX  |  Setup            |   Unused    |          Grapple AI |  Frozen AI  | Death Anim. |   Unused    |   Unknown   |   Unused    |   Shot AI   |   GFX Address            | Drops Pointer        |           Name Pointer
 ;  |      |           |      |      |      |          |    |        |      |      |               |      |      |              |      |      |      |      |      |      |      |      |      |      |      |      |      |          |               |        |             |            |
 DW $0200, Shield_PAL, $0100, $0032, $0010, $0004 : DB $A3, $00 : DW $0000, $0000, Shield_SETUPAI, $0001, $0000, Shield_MAINAI, $804C, $804C, $8041, $0000, $0000, $0000, $0000, $804C, $0000, $0000, $0000, $8023, $802D, $0000 : DL GFX_Shield : DB $02 : DW DROPS_Shield, WEAK_Shield, $E1DB
 
+.ShurikenHeader
 print pc, " - Shuriken Enemy Header"
 ;       Palette              Damage        Y Radius        Hurt AI Time   Boss Value             Number of parts  Main AI       Hurt AI       Xray AI      Unused         PB AI        Unused       Touch AI        Unused                 Layer Priority           Weakness Pointer
 ;GFX Size |             Health |      X Radius  |       AI Bank |     Hurt SFX  |  Setup              |   Unused    |  Grapple AI |  Frozen AI  | Death Anim. |   Unused    |   Unknown   |   Unused    |   Shot AI   |   GFX Address            | Drops Pointer        |           Name Pointer
@@ -301,7 +306,6 @@ LDA #$0080 : STA !timer					; Set timer to $0080
 LDA #$0048 : STA !minDis				; Set the default minimum distance the boss can be from the walls
 LDA #$000A : STA !state					; Set the default state to A
 LDA #$0020 : STA !floatState			; Set the default float state to moving down at full speed, slowing down
-LDA !currHP : STA !HPComparitor			; Store the boss' max HP to a variable
 RTL
 
 print pc, " - Boss MainAI"
