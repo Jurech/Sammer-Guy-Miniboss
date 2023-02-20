@@ -312,29 +312,29 @@ JSL $808111 : PHA				; Randomly determine whether to throw left or right and sto
 LDA !swordsSpawned 				; Check to see which sets of swords have spawned
 CMP #$0002 : BNE ..OnlyOne		; If only one set of swords have been spawned, only check to throw the first shuriken	
 
-LDY #$01C0						; Load index of enemy 7 to Y, the second shuriken
-LDA $0F7A,y						; Load X position of enemy 7 to A
+LDY #$0100						; Load index of enemy 4 to Y, the second shuriken
+LDA $0F7A,y						; Load X position of enemy 4 to A
 CMP #$0100 : BMI ..OnlyOne		; If enemy is already in area, don't throw again
-LDA $0F7A : STA $0F7A,y			; X position of enemy 7 = X position of enemy 0
-LDA $0F7E : STA $0F7E,y			; Y position of enemy 7 = Y position of enemy 0
+LDA $0F7A : STA $0F7A,y			; X position of enemy 4 = X position of enemy 0
+LDA $0F7E : STA $0F7E,y			; Y position of enemy 4 = Y position of enemy 0
 PLA	: BMI ..ThrowDnLeft			; Get throw direction from stack
-PHA : LDA #$0070 : STA $0FB4,y	; Set direction of enemy 7 to down right and put throw direction back on stack
+PHA : LDA #$0070 : STA $0FB4,y	; Set direction of enemy 4 to down right and put throw direction back on stack
 BRA ..OnlyOne
 ..ThrowDnLeft
-PHA : LDA #$0010 : STA $0FB4,y	; Set direction of enemy 7 to down left and put throw direction back on stack
+PHA : LDA #$0010 : STA $0FB4,y	; Set direction of enemy 4 to down left and put throw direction back on stack
 
 
 ..OnlyOne
-LDY #$0180						; Load index of enemy 6 to Y, the first shuriken
-LDA $0F7A,y						; Load X position of enemy 6 to A
+LDY #$00C0						; Load index of enemy 3 to Y, the first shuriken
+LDA $0F7A,y						; Load X position of enemy 3 to A
 CMP #$0100 : BMI ..NoThrow		; If enemy is already in area, don't throw again
-LDA $0F7A : STA $0F7A,y			; X position of enemy 6 = X position of enemy 0
-LDA $0F7E : STA $0F7E,y			; Y position of enemy 6 = Y position of enemy 0
+LDA $0F7A : STA $0F7A,y			; X position of enemy 3 = X position of enemy 0
+LDA $0F7E : STA $0F7E,y			; Y position of enemy 3 = Y position of enemy 0
 PLA	: BMI ..ThrowUpLeft			; Get throw direction from stack
-PHA : LDA #$0090 : STA $0FB4,y	; Set direction of enemy 6 to up right and put throw direction back on stack
+PHA : LDA #$0090 : STA $0FB4,y	; Set direction of enemy 3 to up right and put throw direction back on stack
 BRA ..NoThrow
 ..ThrowUpLeft
-PHA : LDA #$00F0 : STA $0FB4,y	; Set direction of enemy 6 to up left and put throw direction back on stack
+PHA : LDA #$00F0 : STA $0FB4,y	; Set direction of enemy 3 to up left and put throw direction back on stack
 
 ..NoThrow
 PLA 							; Take throw direction off the stack if it was ever determined
@@ -466,10 +466,10 @@ LDA $0F8C,x	: BNE ..NotDead		; Load enemy health to see if it's dead
 LDA #$0003
 JSL $A0A3AF						; Run death animation
 JSL $A0B92B						; Run multi-drop routine TO DO: MAKE OWN VERSION OF THIS
-LDX #$0180 : STX $0E54			; Trick the game to thinking it's working with Enemy 6 to remotely kill it
+LDX #$00C0 : STX $0E54			; Trick the game to thinking it's working with Enemy 3 to remotely kill it
 STZ $0F8C,x						; Set this enemy's HP to 0
 JSL $A0A643						; Call Enemy Shot AI to kill it
-LDX #$01C0 : STX $0E54			; Trick the game to thinking it's working with Enemy 7 to remotely kill it
+LDX #$0100 : STX $0E54			; Trick the game to thinking it's working with Enemy 4 to remotely kill it
 STZ $0F8C,x						; Set this enemy's HP to 0
 JSL $A0A643						; Call Enemy Shot AI to kill it
 STZ $0E54						; Restore the proper enemy index at this location
