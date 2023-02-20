@@ -2,6 +2,7 @@
 ;----------------------------
 lorom
 
+!86Free = $86F4A6	; For enemy projectiles
 !A0Free = $A0F813	; For enemy headers
 !A2Free = $A2F498	; AI code
 !A3Free = $A3F3F5	; AI code
@@ -20,6 +21,10 @@ lorom
 !floatState = $0FB0			; A variable used to determine which direction the boss is floating in and how quickly
 
 !HPComparitor = EnemyHeaders_BossHeader+4	; A variable used to store the initial max HP of the boss to compare it with the current HP for speed calculations
+
+!projectileTimer = $19DF	; The timer variable for enemy projectiles
+!swordPosition = $1AFF		; Each sword's initialization value
+!returnHeight = $1B23		; Height for sword projectiles to return to 
 
 !state0 = #$0000
 !state2 = #$0002
@@ -126,7 +131,7 @@ Sword:
 print pc, " - Sword SetupAI"
 .SETUPAI
 LDX $0E54								; Load enemy index
-LDA #.INSTLISTS_IDLE	: STA $0F92,x	; Load idle instruction list and store to memory
+LDA #.INSTLISTS_IDLE : STA $0F92,x		; Load idle instruction list and store to memory
 LDA #$0008 : STA !state,x				; Set the default state to "inactive"
 RTL
 
@@ -140,127 +145,59 @@ RTL
 
 print pc, " - Sword MainAI"
 .MAINAI
-LDY $0E54						; Load enemy index
-LDA $0F8C : BEQ ..Kill			; Get HP of enemy 0; Kill the sword if the boss is dead.
-LDX !state,y					; Load the current state of the sword
-CPX #$0008 : BEQ ..States		; If inactive, skip to "inactive" code
-LDX !state	 					; Load state of enemy 0 to x
-..States
-JMP (.STATEPOINTERS,x)			; Jump to states based on STATEPOINTERS
+LDX $0E54						; Load enemy index
+LDA !state : CMP #$000A 		; Check to see if state of enemy 0 is 10 (Spawning)
+BNE ..NoSpawn					; If state != 10, not spawning swords
+LDA !swordsSpawned : CMP #$0002 ; Check to see which set of swords have been spawned
+BEQ ..NoSpawn					; If all swords have been spawned, no more spawning
+LDA !timer : CMP #$003F			; Check to see if the timer is 3F (spawning second set of swords)
+BEQ ..SecondSpawn
+CMP #$001F : BNE ..NoSpawn		; If timer is not 1F (first spawn), no spawn
+LDA !swordsSpawned 				; If SwordsSpawned = 0, spawn the first set of swords
+BEQ ..FirstSpawn				; Otherwise, don't spawn
 
-..Kill
-TYX 
-LDA $0F8C,x : BEQ ..Dying		; Check to see if this enemy's death has already been initialized
-STZ $0F8C,x						; Set this enemy's HP to 0
-STZ !timer,x					; Set this enemy's timer to 0
-..Dying
-LDA !timer,x					; Load this enemy's timer to A
-SEC : SBC #$0010 : TAY			; Add a 16 frame delay before the swords fall. Store A in Y
-LDA $0FB4,x : BIT #$0004		; If sword is on the outer layer, add an extra delay
-BEQ ..NoExtraDelay
-TYA : SEC : SBC #$0010 : TAY
-..NoExtraDelay
-TYA
-BMI ..NoFloorHit
-ASL #3 : TAY					; Shift this left by 3 to align with quadratic speed chart and move to Y for indexing
-LDA $838F,y	: STA $12			; Load the subpixel speed and apply it
-INY #2 : LDA $838F,y : STA $14	; Realign with pixel speed, load the pixel speed, and apply it
-JSL $A0C788						; Move enemy down by this speed
-BCC ..NoFloorHit				; If the enemy has not hit the ground, don't prematurely kill it
-JSL $A3802D						; Call Enemy Shot AI to kill it
-..NoFloorHit
-INC !timer,x					; Increment this enemy's timer
+..NoSpawn
 RTL
 
-..Stopped
-TYX
-LDY $0FB4,x						; Get the enemy's speed
-LDA .SWORDDISTANCES,y			; Determine how far away from boss to be
-CLC : ADC $0F7A					; Add it to the X position of Enemy 0 (The Boss)
-STA $0F7A,x						; Store this position to the sword
-LDA $0F7E : STA $0F7E,x			; Y position of enemy = Y position of enemy 0
-LDA !timer 						; Load timer of enemy 0
-CMP #$0001 : BEQ ..StartPrep	; If Timer = 1, Store Y position
+..FirstSpawn
+; Inner left Sword
+TDC
+SEP #$20			;8-bit Mode
+LDA #$00			;[A] = #$PP projectile parameter
+REP #$20
+LDY #$F4A6			; Load Index of the Projectile to fire
+JSL $868027			; Fire projectile
+
+; Inner Right Sword
+TDC
+SEP #$20			;8-bit Mode
+LDA #$02			;[A] = #$PP projectile parameter
+REP #$20
+LDY #$F4A6			; Load Index of the Projectile to fire
+JSL $868027			; Fire projectile
+
+LDA #$0001 : STA !swordsSpawned		; Indicate that the first set of swords has been spawned
 RTL
 
-..StartPrep
-LDA $0F7E : STA $0F7E,x			; Y position of enemy = Y position of enemy 0
-STA $0FAA,x						; Store this Y position to memory. This will be the return height
+..SecondSpawn
+; Leftmost Sword
+TDC
+SEP #$20			;8-bit Mode
+LDA #$04			;[A] = #$PP projectile parameter
+REP #$20
+LDY #$F4A6			; Load Index of the Projectile to fire
+JSL $868027			; Fire projectile
+
+; Rightmost Sword
+TDC
+SEP #$20			;8-bit Mode
+LDA #$06			;[A] = #$PP projectile parameter
+REP #$20
+LDY #$F4A6			; Load Index of the Projectile to fire
+JSL $868027			; Fire projectile
+
+LDA #$0002 : STA !swordsSpawned		; Indicate that the second set of swords has been spawned
 RTL
-
-..AttackPrep
-TYX
-LDA $0FAA,x						; Load initial Y Position
-CLC
-SBC !prepheight					
-CMP $0F7E,x : BPL ...End		; If it has reached !prepheight above the position it started at, stop
-LDA #$FFFD						; Upward Speed
-STZ $12
-STA $14						
-JSL $A0C786						; Move enemy up by A speed
-...End
-RTL
-
-..Downward
-TYX
-LDA #$0003								; Downward Speed
-STA $14
-LDA !HPComparitor : SEC : SBC !currHP	; Get HP of damage dealt to boss
-ASL #3 : STA $12  						; Apply it to subpixel speed						
-JSL $A0C786								; Move enemy down by A speed
-RTL
-
-
-..Return
-TYX
-LDA $0FAA,x								; Load initial Y Position
-CMP $0F7E,x : BEQ ..Reset : BPL ..THigh	; If it has reached the position it started at, reset
-LDA !HPComparitor : SEC : SBC !currHP	; Get HP of damage dealt to boss
-ASL #3 : EOR #$FFFF : STA $12  			; Apply it to subpixel speed
-LDA #$FFFE								; Upward Speed
-STA $14
-JSL $A0C786								; Move enemy up by A speed
-RTL
-..THigh
-LDA $0F7E : STA $0F7E,x			; Y position of enemy = Y position of enemy 0, correcting the height
-..Reset
-LDA !state0 : STA !state		; set state of enemy 0 to 0
-LDA #$0080 : STA !timer			; set timer of enemy 0 to 80
-RTL
-
-..Inactive
-RTL
-
-..Spawning
-TYX
-LDA $0FB4,x	: AND #$0002		; Load the enemy's speed and see if the enemy goes on the left or right
-CMP #$0002 : BEQ ...Left
-
-LDY $0FB4,x						; Get the enemy's speed
-LDA .SWORDDISTANCES,y			; Determine how far away from boss it can go
-CLC : ADC $0F7A					; Add it to the X position of Enemy 0 (The Boss)
-CMP $0F7A,x	: BEQ ...End		; If sword is where it is supposed to be, stop
-STZ $12 : LDA #$0001 : STA $14	; Otherwise, move right by one pixel
-JSL $A0C6AB
-BRA ...End
-
-...Left
-LDY $0FB4,x						; Get the enemy's speed
-LDA .SWORDDISTANCES,y			; Determine how far away from boss it can go
-CLC : ADC $0F7A					; Add it to the X position of Enemy 0 (The Boss)
-CMP $0F7A,x	: BEQ ...End		; If sword is where it is supposed to be, stop
-STZ $12 : LDA #$FFFF : STA $14	; Otherwise, move left by one pixel
-JSL $A0C6AB
-
-...End
-RTL
-
-
-.STATEPOINTERS
-DW .MAINAI_Stopped, .MAINAI_AttackPrep, .MAINAI_Downward, .MAINAI_Return, .MAINAI_Inactive, .MAINAI_Spawning
-
-.SWORDDISTANCES
-DW $0020, $FFE0, $0030, $FFD0					; Distances for swords to stay from boss based on Speed
 
 .INSTLISTS
 print pc, " - Sword Instlists"
@@ -495,30 +432,18 @@ RTL
 ..Spawning
 LDA !swordsSpawned : BEQ ..FirstSet		; If no swords have been spawned, spawn the first set
 LDA $0F8C								; Load the enemy's current HP
-CMP !secPhaseHP : BPL ..MoveSwords_End	; Check to see if the boss is below 1/2 of its max HP If so, do nothing
+CMP !secPhaseHP : BPL ..End				; Check to see if the boss is below 1/2 of its max HP If so, do nothing
 LDA !swordsSpawned 						; If exactly one set of swords have been spawned, spawn the second set
 CMP #$0001 : BEQ ..SecondSet		
-BRA ..MoveSwords_End					; Otherwise, do nothing
+BRA ..End								; Otherwise, do nothing
 
 ..FirstSet
-LDX #$0040							; Index of the first sword
-LDA #$0001 : STA !swordsSpawned		; Indicate that the first set of swords has been spawned
 LDA #$0020 : STA !timer				; set timer to 20
-BRA ..MoveSwords
+BRA ..End
 ..SecondSet
-LDX #$00C0							; Index of the third sword
-LDA #$0002 : STA !swordsSpawned		; Indicate that the second set of swords has been spawned
 LDA #$0040 : STA !timer				; set timer to 40
 
-..MoveSwords
-LDA $0F7A : STA $0F7A,x				; X position of enemy 1/3 = X position of enemy 0
-LDA $0F7E : STA $0F7E,x				; Y position of enemy 1/3 = Y position of enemy 0
-LDA #$000A : STA !state,x			; State of affected sword = Spawning
-TXA : CLC : ADC #$0040 : TAX		; Index of the next sword
-LDA $0F7A : STA $0F7A,x				; X position of enemy 2/4 = X position of enemy 0
-LDA $0F7E : STA $0F7E,x				; Y position of enemy 2/4 = Y position of enemy 0
-LDA #$000A : STA !state,x			; State of affected sword = Spawning
-...End
+..End
 DEC !timer							; Decrement Timer
 CLC : BEQ ..RestartAttack			; If Timer = 0, set state to 0
 RTL	
@@ -742,6 +667,183 @@ DW $01F0 : DB $FC : DW $210C	; Leftmost
 .PAL
 db $00,$00,$FF,$7F,$DE,$7B,$BD,$77,$0C,$21,$46,$08,$9F,$33,$1E,$17,$DC,$0E,$5A,$7F,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
 }
+
+
+org !86Free 
+SwordProjectile:
+{
+DW .InitAI, .MAINAI, .GFXPointer : DB $04, $10 : DW $C032, $0000, $84FB
+print pc, " - Sword Projectile InitAI"
+.InitAI
+LDA $0F7A : STA $1A4B,y				; X position of projectile = X position of enemy 0
+LDA $0F7E : STA $1A93,y				; Y position of projectile = Y position of enemy 0
+LDA $1993 : STA !swordPosition,y	; Store initialization variable as sword position indicator
+TYX : LDA #$0001 : STA $7EF380,x	; Attempt to make the projectile immute to shots
+RTS
+
+print pc, " - Sword Projectile MainAI"
+.MAINAI
+TXY								; Put projectile index into Y instead of X
+LDA $0F8C : BEQ ..Kill			; Get HP of enemy 0; Kill the sword if the boss is dead.
+LDX !state	 					; Load state of enemy 0 to x
+..States
+JMP (.STATEPOINTERS,x)			; Jump to states based on STATEPOINTERS
+
+..Kill
+LDA !projectileTimer,x			; Load this enemy's timer to A
+SEC : SBC #$0010 : TAY			; Add a 16 frame delay before the swords fall. Store A in Y
+LDA !swordPosition,x			; Get sword's position indicator 
+BIT #$0004 : BEQ ..NoExtraDelay	; If sword is on the outer layer, add an extra delay
+TYA : SEC : SBC #$0010 : TAY
+..NoExtraDelay
+
+TYA
+BMI ..NoFloorHit
+PHX : ASL #3 : TAX : PLY		; Shift this left by 3 to align with quadratic speed chart and move to X for indexing. Put projectile index into Y at same time
+LDA $1A6F,y						;\ Get projectile subpixel position
+CLC : ADC $A0CBC7,x				;} If [enemy projectile $1A6F] + [$A0:CBC7 + [X]] >= 10000h:
+BCC ..NoSubMovement				;/ If subpixel speed does not overflow, skip next step
+PHA								;\
+LDA $1A93,y						;|
+INC A							;} Increment enemy projectile Y position
+STA $1A93,y						;|
+PLA								;/
+
+..NoSubMovement
+STA $1A6F,y				 ; Store new subpixel position
+LDA $1A93,y 			 ;\
+CLC             		 ;|
+ADC $A0CBC9,x			 ;} Enemy projectile Y position += Gravity value
+STA $1A93,y  			 ;/
+
+
+
+TYX
+LDA $1A93,y
+CMP #$00C8						;\
+BMI ..NoFloorHit				; If the enemy has not hit the ground, don't prematurely kill it
+LDA #$00C8
+STA $1A93,y  					;} Enemy projectile Y position = C8h
+LDA #$EB93             			;\
+STA $1A03,y  					;} Enemy projectile function = RTS
+LDA #$E208            			;\
+STA $1B47,y  					;} Enemy projectile instruction list pointer = $E208
+LDA #$0A00             			;\
+STA $19BB,y  					;} Enemy projectile VRAM tiles index = 0, palette index = 5
+LDA #$0001             			;\
+STA $1B8F,y  					;} Enemy projectile instruction timer = 1
+JSR $EB94    					; Queue small explosion sound effect
+RTS
+..NoFloorHit
+INC !projectileTimer,x			; Increment this projectile's timer
+RTS
+
+..Stopped
+TYX
+LDY !swordPosition,x			; Get the enemy's position indicator
+LDA .SWORDDISTANCES,y			; Determine how far away from boss to be
+CLC : ADC $0F7A					; Add it to the X position of Enemy 0 (The Boss)
+STA $1A4B,x						; Store this position to the sword
+LDA $0F7E : STA $1A93,x			; Y position of enemy = Y position of enemy 0
+LDA !timer 						; Load timer of enemy 0
+CMP #$0001 : BEQ ..StartPrep	; If Timer = 1, Store Y position
+RTS
+
+..StartPrep
+LDA $0F7E : STA !returnHeight,x	; Store enemy 0 Y position to memory. This will be the return height
+LDA #$FD00 : STA $1ADB,x		; Upward Speed = FD Pixels and 00 Subpixels. Store to projectile Y velocity		
+RTS
+
+..AttackPrep
+TYX
+LDA !returnHeight,x				; Load initial Y Position
+CLC
+SBC !prepheight					
+CMP $1A93,x : BPL ...SlashReady	; If it has reached !prepheight above the position it started at, stop				
+JSR $897B						; Move enemy up by previously-determined speed
+BRA ...End						
+...SlashReady
+LDA !HPComparitor : SEC : SBC !currHP	; Get HP of damage dealt to boss
+LSR #5 : AND #$00FF						; Shift over 5 times to right nybble and chop off left nybble to get subspeed
+ORA #$0300 : STA $1ADB,x  				; Set pixel speed to 3 and apply to speed
+...End
+RTS
+
+..Downward
+TYX
+JSR $897B						; Move enemy down by previously-determined speed
+RTS
+
+
+..Return
+TYX
+LDA !returnHeight,x						; Load initial Y Position
+CMP $1A93,x : BEQ ..Reset : BPL ..THigh	; If it has reached the position it started at, reset
+LDA !HPComparitor : SEC : SBC !currHP	; Get HP of damage dealt to boss
+LSR #5 : EOR #$FFFF : AND #$00FF		; Negate value and chop off left nybble to get subspeed
+ORA #$FE00 : STA $1ADB,x					; Set pixel speed to -2 and apply to speed
+JSR $897B								; Move enemy up by previously-determined speed
+RTS
+..THigh
+LDA $0F7E : STA $1A93,x			; Y position of enemy = Y position of enemy 0, correcting the height
+..Reset
+LDA !state0 : STA !state		; set state of enemy 0 to 0
+LDA #$0080 : STA !timer			; set timer of enemy 0 to 80
+RTS
+
+..Inactive
+RTS
+
+..Spawning
+TYX
+LDA !swordPosition,x : AND #$0002	; Load the enemy's speed and see if the enemy goes on the left or right
+CMP #$0002 : BEQ ...Left
+
+LDY !swordPosition,x				; Get the enemy's speed
+LDA .SWORDDISTANCES,y				; Determine how far away from boss it can go
+CLC : ADC $0F7A						; Add it to the X position of Enemy 0 (The Boss)
+CMP $1A4B,x	: BEQ ...End			; If sword is where it is supposed to be, stop
+INC $1A4B,x							; Otherwise, move right by one pixel
+BRA ...End
+
+...Left
+LDY !swordPosition,x				; Get the enemy's speed
+LDA .SWORDDISTANCES,y				; Determine how far away from boss it can go
+CLC : ADC $0F7A						; Add it to the X position of Enemy 0 (The Boss)
+CMP $1A4B,x	: BEQ ...End			; If sword is where it is supposed to be, stop
+DEC $1A4B,x							; Otherwise, move left by one pixel
+
+...End
+RTS
+
+
+
+.STATEPOINTERS
+DW .MAINAI_Stopped, .MAINAI_AttackPrep, .MAINAI_Downward, .MAINAI_Return, .MAINAI_Inactive, .MAINAI_Spawning
+
+.SWORDDISTANCES
+DW $0020, $FFE0, $0030, $FFD0					; Distances for swords to stay from boss based on Speed
+
+.GFXPointer
+print pc, " - Sword Instlists"
+..IDLE
+DW $0010, .Spritemap, $8159
+
+; Projectile spritemaps must be in Bank $8D
+org $8D8EF3
+print pc, " - Sword Projectile Spritemaps"
+.Spritemap
+DW $0008
+DW $0000 : DB $F0 : DW $6100	; Top Right
+DW $01F8 : DB $F0 : DW $2100	; Top Left
+DW $0000 : DB $F8 : DW $6101	; Up Right
+DW $01F8 : DB $F8 : DW $2101	; Up Left
+DW $0000 : DB $00 : DW $6102	; Down Right
+DW $01F8 : DB $00 : DW $2102	; Down Left
+DW $0000 : DB $08 : DW $6103	; Bottom Right
+DW $01F8 : DB $08 : DW $2103	; Bottom Left
+}
+
 org !B4Free	;free space in $B4 for weaknesses and drops
 {
 WEAK:
@@ -777,3 +879,9 @@ incbin ".\Graphics\Sammer Guy Shield.gfx"
 .Shuriken
 incbin ".\Graphics\Shuriken.gfx"
 print pc, " - End of GFX"
+
+; Fix improper indexing for projectile block dud shots
+org $A09A3D 
+LDA $0B64,y 	; Formerly X-indexed. Now Y-indexed
+STA $12
+LDA $0B78,y
