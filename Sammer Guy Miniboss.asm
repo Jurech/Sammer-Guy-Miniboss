@@ -44,7 +44,7 @@ print pc, " - Sword Enemy Header"
 ;       Palette             Damage        Y Radius        Hurt AI Time   Boss Value          Number of parts  Main AI              Hurt AI       Xray AI      Unused         PB AI        Unused       Touch AI        Unused                Layer Priority          Weakness Pointer
 ;GFX Size |          Health |      X Radius  |       AI Bank |     Hurt SFX  |  Setup           |   Unused    |         Grapple AI |  Frozen AI  | Death Anim. |   Unused    |   Unknown   |   Unused    |   Shot AI   |   GFX Address           | Drops Pointer       |          Name Pointer
 ;  |      |          |      |      |      |          |    |        |      |      |              |      |      |             |      |      |      |      |      |      |      |      |      |      |      |      |      |          |              |        |            |           |
-DW $0200, Sword_PAL, $0100, $0032, $0004, $0010 : DB $A3, $00 : DW $0000, $0000, Sword_SETUPAI, $0001, $0000, Sword_MAINAI, $804C, $804C, $8041, $0000, $0000, $0000, $0000, $804C, $0000, $0000, $0000, $8023, $802D, $0000 : DL GFX_Sword : DB $02 : DW DROPS_Sword, WEAK_Sword, $E1DB
+DW $0400, Sword_PAL, $0100, $0032, $0004, $0010 : DB $A3, $00 : DW $0000, $0000, Sword_SETUPAI, $0001, $0000, Sword_MAINAI, $804C, $804C, $8041, $0000, $0000, $0000, $0000, $804C, $0000, $0000, $0000, $8023, $802D, $0000 : DL GFX_Sword : DB $02 : DW DROPS_Sword, WEAK_Sword, $E1DB
 
 .BossHeader
 print pc, " - Boss Enemy Header"
@@ -496,40 +496,33 @@ DW $0010, .SPM_IDLE1, !sleep
 .SPM
 print pc, " - Boss Spritemaps"
 ..IDLE1
-DW $001A
+DW $0013
 
-DW $0009 : DB $F8 : DW $6105	; Far right mustache
-DW $0001 : DB $F8 : DW $6106	; Near right mustache
-DW $01EF : DB $F8 : DW $2105	; Far left mustache
-DW $01F7 : DB $F8 : DW $2106	; Near left mustache
-
-DW $0008 : DB $EC : DW $6100	; Top Right helmet
-DW $0000 : DB $EC : DW $6101	; Up Right helmet
-DW $0008 : DB $F4 : DW $6110	; Right helmet side
-DW $0008 : DB $FC : DW $6115	; Right helmet base
-
-DW $01F8 : DB $EC : DW $2101	; Up Left Ceiling
-DW $01F0 : DB $EC : DW $2100	; Top Left Corner
-DW $01F0 : DB $F4 : DW $2110	; Left helmet side
-DW $01F0 : DB $FC : DW $2115	; Left helmet base
+DW $0009 : DB $F8 : DW $6106	; Far right mustache
+DW $0001 : DB $F8 : DW $6107	; Near right mustache
+DW $01EF : DB $F8 : DW $2106	; Far left mustache
+DW $01F7 : DB $F8 : DW $2107	; Near left mustache
 
 DW $0000 : DB $F4 : DW $6102	; Upper right face
 DW $01F8 : DB $F4 : DW $2102	; Upper left face
 DW $0000 : DB $FC : DW $6112	; Lower right face
 DW $01F8 : DB $FC : DW $2112	; Lower left face
 
-DW $0000 : DB $FF : DW $6104	; Right shoulder
-DW $01F8 : DB $FF : DW $2104	; Left shoulder
-DW $0007 : DB $07 : DW $6114	; Right hand
-DW $01F1 : DB $07 : DW $2114	; Left hand
+DW $8000 : DB $EC : DW $6100	; Top Right helmet
+DW $0008 : DB $FC : DW $6116	; Right helmet base
 
-DW $0000 : DB $02 : DW $6103	; Upper right body
-DW $01F8 : DB $02 : DW $2103	; Upper left body
-DW $0000 : DB $0A : DW $6113	; Lower right body
-DW $01F8 : DB $0A : DW $2113	; Lower left body
+DW $81F0 : DB $EC : DW $2100	; Top Left helmet
+DW $01F0 : DB $FC : DW $2116	; Left helmet base
 
-DW $0002 : DB $0B : DW $6116	; Right foot
-DW $01F6 : DB $0B : DW $2116	; Left foot
+DW $0000 : DB $FF : DW $6105	; Right shoulder
+DW $01F8 : DB $FF : DW $2105	; Left shoulder
+DW $0007 : DB $07 : DW $6115	; Right hand
+DW $01F1 : DB $07 : DW $2115	; Left hand
+
+DW $81F8 : DB $02 : DW $2103	; Body
+
+DW $0002 : DB $0B : DW $6117	; Right foot
+DW $01F6 : DB $0B : DW $2117	; Left foot
 
 .PAL
 db $00,$00,$2E,$1B,$C4,$12,$43,$1A,$00,$00,$75,$42,$FF,$7F,$44,$08,$A7,$08,$5F,$7B,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
@@ -842,15 +835,9 @@ DW $0010, .Spritemap, $8159
 org $8D8EF3
 print pc, " - Sword Projectile Spritemaps"
 .Spritemap
-DW $0008
-DW $0000 : DB $F0 : DW $6100	; Top Right
-DW $01F8 : DB $F0 : DW $2100	; Top Left
-DW $0000 : DB $F8 : DW $6101	; Up Right
-DW $01F8 : DB $F8 : DW $2101	; Up Left
-DW $0000 : DB $00 : DW $6102	; Down Right
-DW $01F8 : DB $00 : DW $2102	; Down Left
-DW $0000 : DB $08 : DW $6103	; Bottom Right
-DW $01F8 : DB $08 : DW $2103	; Bottom Left
+DW $0002
+DW $81F8 : DB $F0 : DW $2100	; Top
+DW $81F8 : DB $00 : DW $2102	; Bottom
 }
 
 org !B4Free	;free space in $B4 for weaknesses and drops
