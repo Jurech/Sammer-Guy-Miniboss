@@ -376,7 +376,7 @@ RTL										; Skip all other actions this frame
 ..FollowSamus
 LDA $0AF6								; Load Samus X Position
 CMP $0F7A : BMI ..Left					; If Enemy is to the right of Samus
-CMP $0F7A : BEQ ..Stop					; If Enemy is on top of Samus
+BEQ ..Stop								; If Enemy is on top of Samus
 ..Right
 LDA !bossLoc 
 CMP #$0002 : BEQ ..Stop					; If enemy is too far right, don't move
@@ -384,6 +384,8 @@ LDA #$0001 : STA $14					; Move right by one pixel plus change
 LDA !HPComparitor : SEC : SBC !currHP	; Get HP of damage dealt to boss
 ASL #3 : STA $12  						; Apply it to subpixel speed
 JSL $A0C6AB								;/
+LDA $0AF6 								; Reload Samus X Position
+CMP $0F7A : BMI	..CorrectPosition		; If enemy moved too far, correct position
 BRA ..Stop
 ..Left
 LDA !bossLoc 
@@ -392,8 +394,15 @@ LDA #$FFFE : STA $14					; Move left by one pixel plus change
 LDA !HPComparitor : SEC : SBC !currHP	; Get HP of damage dealt to boss
 ASL #3 : EOR #$FFFF : STA $12  			; Apply it to subpixel speed
 JSL $A0C6AB								;/
+LDA $0AF6 								; Reload Samus X Position
+CMP $0F7A : BPL	..CorrectPosition		; If enemy moved too far, correct position
 ..Stop
 RTL
+
+..CorrectPosition
+STA $0F7A								; If the enemy moved past Samus, reset the X position to Samus'
+RTL
+
 }
 
 ; Run the boss' attack protocols
