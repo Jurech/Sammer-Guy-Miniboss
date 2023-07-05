@@ -238,7 +238,7 @@ Boss:
 ; THIS BOSS MUST BE ENEMY INDEX 0!
 print pc, " - Boss SetupAI"
 .SETUPAI
-LDA #.INSTLISTS_IDLE	: STA $0F92		; Load idle instruction list and store to memory
+LDA #.INSTLISTS_SPAWNING : STA $0F92	; Load spawning spritemap
 LDA #$0080 : STA !timer					; Set timer to $0080
 LDA #$0048 : STA !minDis				; Set the default minimum distance the boss can be from the walls
 LDA #$000A : STA !state					; Set the default state to A
@@ -410,6 +410,9 @@ RTL
 ..StartPrep
 LDA !state2 : STA !state		; set state to 2
 LDA #$0020 : STA !timer			; set timer to 20
+LDA #.INSTLISTS_PREPPING 
+STA $0F92						; Load raising spritemap
+LDA #$0001 : STA $0F94			; Set spritemap timer to 1
 RTL
 
 ..AttackPrep
@@ -421,6 +424,9 @@ RTL
 LDA !state4 : STA !state		; set state to 4
 LDA !currHP : LSR #7			; Get current HP /80h
 CLC : ADC #$0040 : STA !timer	; set timer to 40 + HP/80 (Range from 40 - 58)
+LDA #.INSTLISTS_THRUSTING 
+STA $0F92						; Load thrusting spritemap sequence
+LDA #$0001 : STA $0F94			; Set spritemap timer to 1
 RTL
 
 ..Downward
@@ -430,6 +436,9 @@ RTL
 
 ..StartReturn				
 LDA !state6 : STA !state		; set state to 6
+LDA #.INSTLISTS_RETURNING
+STA $0F92						; Load returning spritemap sequence
+LDA #$0001 : STA $0F94			; Set spritemap timer to 1
 ..Return
 RTL
 }
@@ -451,6 +460,8 @@ LDA #$0020 : STA !timer				; set timer to 20
 BRA ..End
 ..SecondSet
 LDA #$0040 : STA !timer				; set timer to 40
+LDA #.INSTLISTS_SPAWNING : STA $0F92; Load spawning spritemap
+LDA #$0001 : STA $0F94				; Set spritemap timer to 1
 
 ..End
 DEC !timer							; Decrement Timer
@@ -460,6 +471,8 @@ RTL
 ..RestartAttack				
 LDA !state0 : STA !state			; set state to 0
 LDA #$0080 : STA !timer				; set timer of enemy 0 to 80
+LDA #.INSTLISTS_IDLE : STA $0F92	; Load idle spritemap
+LDA #$0001 : STA $0F94				; Set spritemap timer to 1
 RTL
 }
 
@@ -491,7 +504,25 @@ DW .MAINAI_Follow, .MAINAI_AttackPrep, .MAINAI_Downward, .MAINAI_Return, .MAINAI
 .INSTLISTS
 print pc, " - Boss Instlists"
 ..IDLE
+DW $0008, .SPM_EXTENDING
 DW $0010, .SPM_IDLE1, !sleep
+..IDLE2
+DW $0008, .SPM_RAISING
+DW $0010, .SPM_IDLE1, !sleep
+..SPAWNING
+DW $0008, .SPM_EXTENDING
+DW $0008, .SPM_EXTENDED, !sleep
+..PREPPING
+DW $0002, .SPM_RAISING
+DW $0002, .SPM_RAISING2, !sleep
+..THRUSTING
+DW $0004, .SPM_RAISING
+DW $0004, .SPM_IDLE1
+DW $0004, .SPM_THRUSTING, !sleep
+..RETURNING
+DW $0008, .SPM_IDLE1
+DW $0008, .SPM_RAISING
+DW $0008, .SPM_RAISING2, !sleep
 
 .SPM
 print pc, " - Boss Spritemaps"
@@ -518,6 +549,151 @@ DW $0000 : DB $FF : DW $6105	; Right shoulder
 DW $01F8 : DB $FF : DW $2105	; Left shoulder
 DW $0007 : DB $07 : DW $6115	; Right hand
 DW $01F1 : DB $07 : DW $2115	; Left hand
+
+DW $81F8 : DB $02 : DW $2103	; Body
+
+DW $0002 : DB $0B : DW $6117	; Right foot
+DW $01F6 : DB $0B : DW $2117	; Left foot
+
+..EXTENDING
+DW $0013
+
+DW $0009 : DB $F9 : DW $6106	; Far right mustache
+DW $0001 : DB $F9 : DW $6107	; Near right mustache
+DW $01EF : DB $F9 : DW $2106	; Far left mustache
+DW $01F7 : DB $F9 : DW $2107	; Near left mustache
+
+DW $0000 : DB $F5 : DW $6118	; Upper right face (Eyes closing)
+DW $01F8 : DB $F5 : DW $2118	; Upper left face (Eyes closing)
+DW $0000 : DB $FD : DW $6112	; Lower right face
+DW $01F8 : DB $FD : DW $2112	; Lower left face
+
+DW $8000 : DB $ED : DW $6100	; Top Right helmet
+DW $0008 : DB $FD : DW $6116	; Right helmet base
+
+DW $81F0 : DB $ED : DW $2100	; Top Left helmet
+DW $01F0 : DB $FD : DW $2116	; Left helmet base
+
+DW $0002 : DB $00 : DW $610A	; Right shoulder (extending)
+DW $01F6 : DB $00 : DW $210A	; Left shoulder (extending)
+DW $000A : DB $05 : DW $611A	; Right hand (extending)
+DW $01EE : DB $05 : DW $211A	; Left hand (extending)
+
+DW $81F8 : DB $02 : DW $2103	; Body
+
+DW $0002 : DB $0B : DW $6117	; Right foot
+DW $01F6 : DB $0B : DW $2117	; Left foot
+
+..EXTENDED
+DW $0013
+
+DW $0009 : DB $F9 : DW $6106	; Far right mustache
+DW $0001 : DB $F9 : DW $6107	; Near right mustache
+DW $01EF : DB $F9 : DW $2106	; Far left mustache
+DW $01F7 : DB $F9 : DW $2107	; Near left mustache
+
+DW $0000 : DB $F5 : DW $6108	; Upper right face (Eyes closed)
+DW $01F8 : DB $F5 : DW $2108	; Upper left face (Eyes closed)
+DW $0000 : DB $FD : DW $6112	; Lower right face
+DW $01F8 : DB $FD : DW $2112	; Lower left face
+
+DW $8000 : DB $ED : DW $6100	; Top Right helmet
+DW $0008 : DB $FD : DW $6116	; Right helmet base
+
+DW $81F0 : DB $ED : DW $2100	; Top Left helmet
+DW $01F0 : DB $FD : DW $2116	; Left helmet base
+
+DW $0003 : DB $00 : DW $6109	; Right shoulder (extended)
+DW $01F5 : DB $00 : DW $2109	; Left shoulder (extended)
+DW $000A : DB $02 : DW $6119	; Right hand (extended)
+DW $01EE : DB $02 : DW $2119	; Left hand (extended)
+
+DW $81F8 : DB $02 : DW $2103	; Body
+
+DW $0002 : DB $0B : DW $6117	; Right foot
+DW $01F6 : DB $0B : DW $2117	; Left foot
+
+..RAISING
+DW $0013
+
+DW $0009 : DB $F8 : DW $610B	; Far right mustache (raised)
+DW $0001 : DB $F8 : DW $610C	; Near right mustache (raised)
+DW $01EF : DB $F8 : DW $210B	; Far left mustache (raised)
+DW $01F7 : DB $F8 : DW $210C	; Near left mustache (raised)
+
+DW $0000 : DB $F4 : DW $6102	; Upper right face
+DW $01F8 : DB $F4 : DW $2102	; Upper left face
+DW $0000 : DB $FC : DW $6112	; Lower right face
+DW $01F8 : DB $FC : DW $2112	; Lower left face
+
+DW $8000 : DB $EC : DW $6100	; Top Right helmet
+DW $0008 : DB $FC : DW $6116	; Right helmet base
+
+DW $81F0 : DB $EC : DW $2100	; Top Left helmet
+DW $01F0 : DB $FC : DW $2116	; Left helmet base
+
+DW $0000 : DB $FE : DW $6105	; Right shoulder
+DW $01F8 : DB $FE : DW $2105	; Left shoulder
+DW $0007 : DB $06 : DW $6115	; Right hand
+DW $01F1 : DB $06 : DW $2115	; Left hand
+
+DW $81F8 : DB $02 : DW $2103	; Body
+
+DW $0002 : DB $0B : DW $6117	; Right foot
+DW $01F6 : DB $0B : DW $2117	; Left foot
+
+..RAISING2
+DW $0013
+
+DW $0009 : DB $F8 : DW $610B	; Far right mustache (raised)
+DW $0001 : DB $F8 : DW $610C	; Near right mustache (raised)
+DW $01EF : DB $F8 : DW $210B	; Far left mustache (raised)
+DW $01F7 : DB $F8 : DW $210C	; Near left mustache (raised)
+
+DW $0000 : DB $F4 : DW $6102	; Upper right face
+DW $01F8 : DB $F4 : DW $2102	; Upper left face
+DW $0000 : DB $FC : DW $6112	; Lower right face
+DW $01F8 : DB $FC : DW $2112	; Lower left face
+
+DW $8000 : DB $EC : DW $6100	; Top Right helmet
+DW $0008 : DB $FC : DW $6116	; Right helmet base
+
+DW $81F0 : DB $EC : DW $2100	; Top Left helmet
+DW $01F0 : DB $FC : DW $2116	; Left helmet base
+
+DW $0001 : DB $FE : DW $610A	; Right shoulder (extending)
+DW $01F7 : DB $FE : DW $210A	; Left shoulder (extending)
+DW $0008 : DB $04 : DW $611A	; Right hand (extending)
+DW $01F0 : DB $04 : DW $211A	; Left hand (extending)
+
+DW $81F8 : DB $02 : DW $2103	; Body
+
+DW $0002 : DB $0B : DW $6117	; Right foot
+DW $01F6 : DB $0B : DW $2117	; Left foot
+
+..THRUSTING
+DW $0013
+
+DW $0009 : DB $F8 : DW $6106	; Far right mustache
+DW $0001 : DB $F8 : DW $6107	; Near right mustache
+DW $01EF : DB $F8 : DW $2106	; Far left mustache
+DW $01F7 : DB $F8 : DW $2107	; Near left mustache
+
+DW $0000 : DB $F4 : DW $6102	; Upper right face
+DW $01F8 : DB $F4 : DW $2102	; Upper left face
+DW $0000 : DB $FC : DW $6112	; Lower right face
+DW $01F8 : DB $FC : DW $2112	; Lower left face
+
+DW $8000 : DB $EC : DW $6100	; Top Right helmet
+DW $0008 : DB $FC : DW $6116	; Right helmet base
+
+DW $81F0 : DB $EC : DW $2100	; Top Left helmet
+DW $01F0 : DB $FC : DW $2116	; Left helmet base
+
+DW $0000 : DB $FF : DW $6105	; Right shoulder
+DW $01F8 : DB $FF : DW $2105	; Left shoulder
+DW $0007 : DB $07 : DW $611B	; Right hand (Thrusting)
+DW $01F1 : DB $07 : DW $211B	; Left hand (Thrusting)
 
 DW $81F8 : DB $02 : DW $2103	; Body
 
@@ -791,6 +967,9 @@ LDA $0F7E : STA $1A93,x			; Y position of enemy = Y position of enemy 0, correct
 ..Reset
 LDA !state0 : STA !state		; set state of enemy 0 to 0
 LDA #$0080 : STA !timer			; set timer of enemy 0 to 80
+
+LDA #Boss_INSTLISTS_IDLE2 : STA $0F92	; Load idle spritemap for enemy 0
+LDA #$0001 : STA $0F94					; Set spritemap timer to 1 for enemy 0
 RTS
 
 ..Inactive
