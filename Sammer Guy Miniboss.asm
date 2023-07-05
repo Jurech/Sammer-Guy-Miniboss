@@ -207,15 +207,9 @@ DW $0010, .SPM_IDLE1, !sleep
 .SPM
 print pc, " - Sword Spritemaps"
 ..IDLE1
-DW $0008
-DW $0000 : DB $F0 : DW $6100	; Top Right
-DW $01F8 : DB $F0 : DW $2100	; Top Left
-DW $0000 : DB $F8 : DW $6101	; Up Right
-DW $01F8 : DB $F8 : DW $2101	; Up Left
-DW $0000 : DB $00 : DW $6102	; Down Right
-DW $01F8 : DB $00 : DW $2102	; Down Left
-DW $0000 : DB $08 : DW $6103	; Bottom Right
-DW $01F8 : DB $08 : DW $2103	; Bottom Left
+DW $0002
+DW $81F8 : DB $F0 : DW $2100	; Top
+DW $81F8 : DB $00 : DW $2102	; Bottom
 
 .PAL
 db $00,$00,$39,$7B,$C6,$30,$9E,$23,$0C,$21,$46,$08,$9F,$33,$1E,$17,$DC,$0E,$5A,$7F,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
@@ -307,34 +301,48 @@ STA !floatState : PHA			; Invert the acceleration if at peak speed and put A bac
 ..ShurikenCheck
 PLA								; Get A back from the stack regardless of the outcome of the branch
 LDA !timer
-CMP #$0040 : BNE ..SkipThrow	; If timer = 40, throw shuriken
+CMP #$0040 : BEQ ..Throw	; If timer = 40, throw shuriken
+JMP ..SkipThrow
+..Throw
 JSL $808111 : PHA				; Randomly determine whether to throw left or right and store it on the stack
 LDA !swordsSpawned 				; Check to see which sets of swords have spawned
 CMP #$0002 : BNE ..OnlyOne		; If only one set of swords have been spawned, only check to throw the first shuriken	
-
 LDY #$0100						; Load index of enemy 4 to Y, the second shuriken
 LDA $0F7A,y						; Load X position of enemy 4 to A
 CMP #$0100 : BMI ..OnlyOne		; If enemy is already in area, don't throw again
 LDA $0F7A : STA $0F7A,y			; X position of enemy 4 = X position of enemy 0
-LDA $0F7E : STA $0F7E,y			; Y position of enemy 4 = Y position of enemy 0
+LDA $0F7E : CLC 
+ADC #$0008 : STA $0F7E,y		; Y position of enemy 4 = Y position of enemy 0 + 8
 PLA	: BMI ..ThrowDnLeft			; Get throw direction from stack
 PHA : LDA #$0070 : STA $0FB4,y	; Set direction of enemy 4 to down right and put throw direction back on stack
+LDA #.INSTLISTS_RIGHTTHROW 
+STA $0F92						; Load left throw animation routine
+LDA #$0001 : STA $0F94			; Set spritemap timer to 1
 BRA ..OnlyOne
 ..ThrowDnLeft
 PHA : LDA #$0010 : STA $0FB4,y	; Set direction of enemy 4 to down left and put throw direction back on stack
-
+LDA #.INSTLISTS_LEFTTHROW 
+STA $0F92						; Load left throw animation routine
+LDA #$0001 : STA $0F94			; Set spritemap timer to 1
 
 ..OnlyOne
 LDY #$00C0						; Load index of enemy 3 to Y, the first shuriken
 LDA $0F7A,y						; Load X position of enemy 3 to A
 CMP #$0100 : BMI ..NoThrow		; If enemy is already in area, don't throw again
 LDA $0F7A : STA $0F7A,y			; X position of enemy 3 = X position of enemy 0
-LDA $0F7E : STA $0F7E,y			; Y position of enemy 3 = Y position of enemy 0
+LDA $0F7E : CLC 
+ADC #$0008 : STA $0F7E,y		; Y position of enemy 4 = Y position of enemy 0 + 8
 PLA	: BMI ..ThrowUpLeft			; Get throw direction from stack
 PHA : LDA #$0090 : STA $0FB4,y	; Set direction of enemy 3 to up right and put throw direction back on stack
+LDA #.INSTLISTS_RIGHTTHROW 
+STA $0F92						; Load left throw animation routine
+LDA #$0001 : STA $0F94			; Set spritemap timer to 1
 BRA ..NoThrow
 ..ThrowUpLeft
 PHA : LDA #$00F0 : STA $0FB4,y	; Set direction of enemy 3 to up left and put throw direction back on stack
+LDA #.INSTLISTS_LEFTTHROW 
+STA $0F92						; Load left throw animation routine
+LDA #$0001 : STA $0F94			; Set spritemap timer to 1
 
 ..NoThrow
 PLA 							; Take throw direction off the stack if it was ever determined
@@ -523,6 +531,16 @@ DW $0004, .SPM_THRUSTING, !sleep
 DW $0008, .SPM_IDLE1
 DW $0008, .SPM_RAISING
 DW $0008, .SPM_RAISING2, !sleep
+..LEFTTHROW
+DW $0004, .SPM_LEFTGRAB1
+DW $0004, .SPM_LEFTGRAB2
+DW $0004, .SPM_LEFTGRAB1
+DW $0010, .SPM_IDLE1, !sleep
+..RIGHTTHROW
+DW $0004, .SPM_RIGHTGRAB1
+DW $0004, .SPM_RIGHTGRAB2
+DW $0004, .SPM_RIGHTGRAB1
+DW $0010, .SPM_IDLE1, !sleep
 
 .SPM
 print pc, " - Boss Spritemaps"
@@ -696,6 +714,126 @@ DW $0007 : DB $07 : DW $611B	; Right hand (Thrusting)
 DW $01F1 : DB $07 : DW $211B	; Left hand (Thrusting)
 
 DW $81F8 : DB $02 : DW $2103	; Body
+
+DW $0002 : DB $0B : DW $6117	; Right foot
+DW $01F6 : DB $0B : DW $2117	; Left foot
+
+..LEFTGRAB1
+DW $0013
+
+DW $0009 : DB $F8 : DW $6106	; Far right mustache
+DW $0001 : DB $F8 : DW $6107	; Near right mustache
+DW $01EF : DB $F8 : DW $2106	; Far left mustache
+DW $01F7 : DB $F8 : DW $2107	; Near left mustache
+
+DW $0000 : DB $F4 : DW $6102	; Upper right face
+DW $01F8 : DB $F4 : DW $2102	; Upper left face
+DW $0000 : DB $FC : DW $6112	; Lower right face
+DW $01F8 : DB $FC : DW $2112	; Lower left face
+
+DW $8000 : DB $EC : DW $6100	; Top Right helmet
+DW $0008 : DB $FC : DW $6116	; Right helmet base
+
+DW $81F0 : DB $EC : DW $2100	; Top Left helmet
+DW $01F0 : DB $FC : DW $2116	; Left helmet base
+
+DW $0000 : DB $FF : DW $6105	; Right shoulder
+DW $0007 : DB $07 : DW $6115	; Right hand
+DW $01F8 : DB $FF : DW $2105	; Left shoulder
+
+DW $81F8 : DB $02 : DW $2103	; Body
+
+DW $01F1 : DB $07 : DW $211B	; Left hand (Thrusting)
+
+DW $0002 : DB $0B : DW $6117	; Right foot
+DW $01F6 : DB $0B : DW $2117	; Left foot
+
+..LEFTGRAB2
+DW $0013
+
+DW $0009 : DB $F8 : DW $6106	; Far right mustache
+DW $0001 : DB $F8 : DW $6107	; Near right mustache
+DW $01EF : DB $F8 : DW $2106	; Far left mustache
+DW $01F7 : DB $F8 : DW $2107	; Near left mustache
+
+DW $0000 : DB $F4 : DW $6102	; Upper right face
+DW $01F8 : DB $F4 : DW $2102	; Upper left face
+DW $0000 : DB $FC : DW $6112	; Lower right face
+DW $01F8 : DB $FC : DW $2112	; Lower left face
+
+DW $8000 : DB $EC : DW $6100	; Top Right helmet
+DW $0008 : DB $FC : DW $6116	; Right helmet base
+
+DW $81F0 : DB $EC : DW $2100	; Top Left helmet
+DW $01F0 : DB $FC : DW $2116	; Left helmet base
+
+DW $0000 : DB $FF : DW $6105	; Right shoulder
+DW $0007 : DB $07 : DW $6115	; Right hand
+DW $01F8 : DB $FF : DW $2105	; Left shoulder
+
+DW $81F8 : DB $02 : DW $2103	; Body
+
+DW $01F3 : DB $07 : DW $211C	; Left hand (Down)
+
+DW $0002 : DB $0B : DW $6117	; Right foot
+DW $01F6 : DB $0B : DW $2117	; Left foot
+
+..RIGHTGRAB1
+DW $0013
+
+DW $0009 : DB $F8 : DW $6106	; Far right mustache
+DW $0001 : DB $F8 : DW $6107	; Near right mustache
+DW $01EF : DB $F8 : DW $2106	; Far left mustache
+DW $01F7 : DB $F8 : DW $2107	; Near left mustache
+
+DW $0000 : DB $F4 : DW $6102	; Upper right face
+DW $01F8 : DB $F4 : DW $2102	; Upper left face
+DW $0000 : DB $FC : DW $6112	; Lower right face
+DW $01F8 : DB $FC : DW $2112	; Lower left face
+
+DW $8000 : DB $EC : DW $6100	; Top Right helmet
+DW $0008 : DB $FC : DW $6116	; Right helmet base
+
+DW $81F0 : DB $EC : DW $2100	; Top Left helmet
+DW $01F0 : DB $FC : DW $2116	; Left helmet base
+
+DW $0000 : DB $FF : DW $6105	; Right shoulder
+DW $01F8 : DB $FF : DW $2105	; Left shoulder
+DW $01F1 : DB $07 : DW $2115	; Left hand
+
+DW $81F8 : DB $02 : DW $2103	; Body
+
+DW $0007 : DB $07 : DW $611B	; Right hand (Thrusting)
+
+DW $0002 : DB $0B : DW $6117	; Right foot
+DW $01F6 : DB $0B : DW $2117	; Left foot
+
+..RIGHTGRAB2
+DW $0013
+
+DW $0009 : DB $F8 : DW $6106	; Far right mustache
+DW $0001 : DB $F8 : DW $6107	; Near right mustache
+DW $01EF : DB $F8 : DW $2106	; Far left mustache
+DW $01F7 : DB $F8 : DW $2107	; Near left mustache
+
+DW $0000 : DB $F4 : DW $6102	; Upper right face
+DW $01F8 : DB $F4 : DW $2102	; Upper left face
+DW $0000 : DB $FC : DW $6112	; Lower right face
+DW $01F8 : DB $FC : DW $2112	; Lower left face
+
+DW $8000 : DB $EC : DW $6100	; Top Right helmet
+DW $0008 : DB $FC : DW $6116	; Right helmet base
+
+DW $81F0 : DB $EC : DW $2100	; Top Left helmet
+DW $01F0 : DB $FC : DW $2116	; Left helmet base
+
+DW $0000 : DB $FF : DW $6105	; Right shoulder
+DW $01F1 : DB $07 : DW $2115	; Left hand
+DW $01F8 : DB $FF : DW $2105	; Left shoulder
+
+DW $81F8 : DB $02 : DW $2103	; Body
+
+DW $0005 : DB $07 : DW $611C	; Right hand (Down)
 
 DW $0002 : DB $0B : DW $6117	; Right foot
 DW $01F6 : DB $0B : DW $2117	; Left foot
