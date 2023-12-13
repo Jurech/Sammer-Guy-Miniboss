@@ -58,7 +58,7 @@ print pc, " - Shield Enemy Header"
 ;       Palette              Damage        Y Radius        Hurt AI Time   Boss Value           Number of parts  Main AI               Hurt AI       Xray AI      Unused         PB AI        Unused       Touch AI        Unused                 Layer Priority           Weakness Pointer
 ;GFX Size |           Health |      X Radius  |       AI Bank |     Hurt SFX  |  Setup            |   Unused    |          Grapple AI |  Frozen AI  | Death Anim. |   Unused    |   Unknown   |   Unused    |   Shot AI   |   GFX Address            | Drops Pointer        |           Name Pointer
 ;  |      |           |      |      |      |          |    |        |      |      |               |      |      |              |      |      |      |      |      |      |      |      |      |      |      |      |      |          |               |        |             |            |
-DW $0200, Shield_PAL, $0100, $0032, $0010, $0004 : DB $A3, $00 : DW $0000, $0000, Shield_SETUPAI, $0001, $0000, Shield_MAINAI, $804C, $804C, $8041, $0000, $0000, $0000, $0000, $804C, $0000, $0000, $0000, $8023, $802D, $0000 : DL GFX_Shield : DB $02 : DW DROPS_Shield, WEAK_Shield, $E1DB
+DW $0200, Shield_PAL, $0100, $0032, $0012, $0004 : DB $A3, $00 : DW $0000, $0000, Shield_SETUPAI, $0001, $0000, Shield_MAINAI, $804C, $804C, $8041, $0000, $0000, $0000, $0000, $804C, $0000, $0000, $0000, $8023, $802D, $0000 : DL GFX_Shield : DB $02 : DW DROPS_Shield, WEAK_Shield, $E1DB
 
 .ShurikenHeader
 print pc, " - Shuriken Enemy Header"
@@ -692,21 +692,21 @@ DW $01F6 : DB $0B : DW $2117	; Left foot
 ..THRUSTING
 DW $0013
 
-DW $0009 : DB $F8 : DW $6106	; Far right mustache
-DW $0001 : DB $F8 : DW $6107	; Near right mustache
-DW $01EF : DB $F8 : DW $2106	; Far left mustache
-DW $01F7 : DB $F8 : DW $2107	; Near left mustache
+DW $0009 : DB $F9 : DW $6106	; Far right mustache
+DW $0001 : DB $F9 : DW $6107	; Near right mustache
+DW $01EF : DB $F9 : DW $2106	; Far left mustache
+DW $01F7 : DB $F9 : DW $2107	; Near left mustache
 
-DW $0000 : DB $F4 : DW $6102	; Upper right face
-DW $01F8 : DB $F4 : DW $2102	; Upper left face
-DW $0000 : DB $FC : DW $6112	; Lower right face
-DW $01F8 : DB $FC : DW $2112	; Lower left face
+DW $0000 : DB $F5 : DW $6102	; Upper right face
+DW $01F8 : DB $F5 : DW $2102	; Upper left face
+DW $0000 : DB $FD : DW $6112	; Lower right face
+DW $01F8 : DB $FD : DW $2112	; Lower left face
 
-DW $8000 : DB $EC : DW $6100	; Top Right helmet
-DW $0008 : DB $FC : DW $6116	; Right helmet base
+DW $8000 : DB $ED : DW $6100	; Top Right helmet
+DW $0008 : DB $FD : DW $6116	; Right helmet base
 
-DW $81F0 : DB $EC : DW $2100	; Top Left helmet
-DW $01F0 : DB $FC : DW $2116	; Left helmet base
+DW $81F0 : DB $ED : DW $2100	; Top Left helmet
+DW $01F0 : DB $FD : DW $2116	; Left helmet base
 
 DW $0000 : DB $FF : DW $6105	; Right shoulder
 DW $01F8 : DB $FF : DW $2105	; Left shoulder
@@ -1198,3 +1198,29 @@ org $A09A3D
 LDA $0B64,y 	; Formerly X-indexed. Now Y-indexed
 STA $12
 LDA $0B78,y
+
+;MUSIC
+
+;this value is the song's index as it appears in RF and the offset from the first track in the SPC engine
+;change it from #$0000 to #$0003 to replace Smile song 03, to #$0006 to replace Smile song 06, etc
+
+!Song_Index = $0027
+
+;this next value is the address in ROM where your NSPC gets written to, make sure you have enough freespace at this address!
+
+!Song_Location = $D899B2
+
+;this next value needs to be set to the name of your song, in the same folder as this patch!
+;your song should be an NSPC file. Delete the sample title and replace it with your filename.
+
+!Song_Title = Sammers_Last_Stand.nspc
+
+;edit music pointer table @8FE7E1 + !Song_Index
+;track 00 + !Song_Index
+ORG $8FE7E1+!Song_Index
+DL !Song_Location
+
+
+;then, INCnspc your nspc files
+ORG !Song_Location
+INCBIN !Song_Title
