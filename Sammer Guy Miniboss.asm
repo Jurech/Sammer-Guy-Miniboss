@@ -389,26 +389,26 @@ BEQ ..Stop								; If Enemy is on top of Samus
 LDA !bossLoc 
 CMP #$0002 : BEQ ..Stop					; If enemy is too far right, don't move
 LDA #$0001 : STA $14					; Move right by one pixel plus change
+LDA $0AF6 : SEC : SBC $0F7A				; Load Samus X Position
+CMP #$0001 : BEQ ..NoSub				; If Enemy one pixel off Samus, skip subpixel movement
 LDA !HPComparitor : SEC : SBC !currHP	; Get HP of damage dealt to boss
 ASL #3 : STA $12  						; Apply it to subpixel speed
 JSL $A0C6AB								;/
-LDA $0AF6 								; Reload Samus X Position
-CMP $0F7A : BMI	..CorrectPosition		; If enemy moved too far, correct position
 BRA ..Stop
 ..Left
 LDA !bossLoc 
 CMP #$0001 : BEQ ..Stop					; If enemy is too far left, don't move
 LDA #$FFFE : STA $14					; Move left by one pixel plus change
+LDA $0AF6 : SEC : SBC $0F7A				; Load Samus X Position
+CMP #$FFFE : BEQ ..NoSub				; If Enemy one pixel off Samus, skip subpixel movement
 LDA !HPComparitor : SEC : SBC !currHP	; Get HP of damage dealt to boss
 ASL #3 : EOR #$FFFF : STA $12  			; Apply it to subpixel speed
 JSL $A0C6AB								;/
-LDA $0AF6 								; Reload Samus X Position
-CMP $0F7A : BPL	..CorrectPosition		; If enemy moved too far, correct position
 ..Stop
 RTL
 
-..CorrectPosition
-STA $0F7A								; If the enemy moved past Samus, reset the X position to Samus'
+..NoSub
+STZ $12 : JSL $A0C6AB					; Apply movement but with no subpixel speed
 RTL
 
 }
