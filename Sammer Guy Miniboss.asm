@@ -3,9 +3,11 @@
 lorom
 
 !86Free = $86F4A6	; For enemy projectiles
+!92Free = $92EE00	; For title card stuff
 !A0Free = $A0F813	; For enemy headers
 !A2Free = $A2F498	; AI code
 !A3Free = $A3F3F5	; AI code
+!A5Free = $A5F970	; AI code
 !B4Free = $B4F4E0	; For drops/weaknesses
 
 !GraphSp  = $B89000 ; Free Space for Graphics
@@ -20,6 +22,7 @@ lorom
 !swordsSpawned = $0FAE		; A variable indicating which swords the boss has spawned
 !floatState = $0FB0			; A variable used to determine which direction the boss is floating in and how quickly
 
+
 !HPComparitor = EnemyHeaders_BossHeader+4	; A variable used to store the initial max HP of the boss to compare it with the current HP for speed calculations
 
 !projectileTimer = $19DF	; The timer variable for enemy projectiles
@@ -33,8 +36,12 @@ lorom
 !state8 = #$0008
 !stateA = #$000A
 !prepheight = #$0008
-!maxHP = #$0C00
-!secPhaseHP = #$0600
+!maxHP = #$1000
+!secPhaseHP = #$0800
+
+!TITLE_HEADER_LOCATION = #$F913
+!BOSS_HEADER_LOCATION = #$F853
+!TITLE_INDEX = $1F5B ; USES THE END OF THE STACK
 
 org !A0Free
 EnemyHeaders:
@@ -67,6 +74,15 @@ print pc, " - Shuriken Enemy Header"
 ;  |      |             |      |      |      |          |    |        |      |      |                 |      |      |      |      |      |      |      |      |      |      |      |      |      |      |      |      |          |               |        |             |            |
 DW $0400, Shuriken_PAL, $0100, $0032, $0008, $0008 : DB $A2, $00 : DW $0000, $0000, Shuriken_SETUPAI, $0001, $0000, $B40F, $800F, $804C, $8041, $0000, $0000, $0000, $0000, $8037, $0000, $0000, $0000, $8023, $802D, $0000 : DL GFX_Shuriken : DB $02 : DW DROPS_Shuriken, WEAK_Shuriken, $E1DB
 
+.TypewriterHeader
+print pc, " - Typewriter Enemy Header"
+dw $0000,$0000,$0028,$000F,$0010,$0008 
+db $A5,$00,$59,$00,$00,$00
+dw #AREA_TITLE_INIT,$0001,$0000,#AREA_TITLE_AI,$8004,#AREA_TITLE_SHOT_AI,$8041,$0000,$0000
+dl $000000
+db $00
+dw #AREA_TITLE_SHOT_AI,$0000,$0000,$0000,#AREA_TITLE_SHOT_AI,#AREA_TITLE_SHOT_AI
+db $00,$00,$00,$00,$00,$00,$00,$00,$08,$EF,$00,$00
 }
 
 org !A2Free
@@ -220,7 +236,7 @@ db $00,$00,$39,$7B,$C6,$30,$9E,$23,$0C,$21,$46,$08,$9F,$33,$1E,$17,$DC,$0E,$5A,$
 ; 0002 = Attack Prep
 ; 0004 = Attacking
 ; 0006 = Returning
-; 0008 = Nothing
+; 0008 = Intro
 ; 000A = Spawning Swords
 
 ; Boss Location Table:
@@ -232,11 +248,20 @@ Boss:
 ; THIS BOSS MUST BE ENEMY INDEX 0!
 print pc, " - Boss SetupAI"
 .SETUPAI
-LDA #.INSTLISTS_SPAWNING : STA $0F92	; Load spawning spritemap
-LDA #$0080 : STA !timer					; Set timer to $0080
-LDA #$0048 : STA !minDis				; Set the default minimum distance the boss can be from the walls
-LDA #$000A : STA !state					; Set the default state to A
-LDA #$0020 : STA !floatState			; Set the default float state to moving down at full speed, slowing down
+LDA #.INSTLISTS_IDLE : STA $0F92		; Load idle spritemap
+LDA #$0300 : STA !timer					; Set timer to $0300
+LDA #$0008 : STA !state					; Set the default state to Intro
+LDA #$2400 : STA $0F86					; Make boss intangible at the start
+LDA #$0024 : STA $0FAC					; Stores Maximum Letters in title card
+LDA #$FFFF : STA $0FB2					; Stores a timer, which will Dec each frame
+LDA #$0200 : STA $0FAE					; Stores Master lifespan for title card once xray fool tile is touched
+
+; Into text setup stuff
+LDA.w #GFX_REFRESH : STA $00
+LDA.w #GFX_REFRESH>>8 : STA $01
+JSL $818EB2						; Loading tilemap stuff
+LDA $0E54 : STA !TITLE_INDEX
+LDA #.MAINAI_A_SAMMER_INTRO : STA $0F92	; Stores the gfx pointer to change the message to be shown
 RTL
 
 print pc, " - Boss MainAI"
@@ -451,9 +476,78 @@ LDA #$0001 : STA $0F94			; Set spritemap timer to 1
 RTL
 }
 
-..Nothing
+print pc, " - Boss IntroAI"
+..Intro
+LDA $0FAE : BNE ..Run_Text
+LDA $0F94 : CMP #$0001 : BNE ..Run_Text	; If both master = 0 and current lifespan = 1, spawn the boss
+LDA #$0005 : JSL $808FC1				; Trigger boss music change
+LDA #$0010 : STA $0F9C					; Set enemy flash timer to 16 for boss
+LDA #.INSTLISTS_SPAWNING : STA $0F92	; Load spawning spritemap
+LDA #$0001 : STA $0F94					; Set spritemap timer to 1
+LDA #$0080 : STA !timer					; Set timer to $0080
+LDA #$000A : STA !state					; Set state to spawning swords
+LDA #$2000 : STA $0F86					; Make boss tangible and visible
+LDA #$2000 : STA $1006					; Make shield tangible and visible
+LDA #$0048 : STA !minDis				; Set the default minimum distance the boss can be from the walls
+LDA #$0020 : STA !floatState			; Set the default float state to moving down at full speed, slowing down
+RTL
+..Run_Text
+	LDX $0E54		; Loads Current enemy in room
+	LDA $07F3 : CMP #$0021 : BPL + 		; Check to see if the song is at or above set 21 (Mother brain fight) 
+	LDA $0F94							; Load enemy instruction timer (lifetime)
+	CMP #$0002							
+	BNE ++								; Continue if not equal to 2
++	;STZ $0F7A,x		; Zero out enemy X position
+	;STZ $0F7E,x		; Zero out enemy Y position
+	;STZ $0F78,X 	; Zero out enemy ID (to delete it?)
+	RTL
+++	TXA
+	RTL
 RTL
 
+; Intro Text Spritemap
+{
+..A_SAMMER_INTRO		; Speed	$0000
+	DW $01A4, ..AT_SAMMER_INTRO
+	DW $80ED, ..A_SAMMER_INTRO
+..AT_SAMMER_INTRO	 DW $0024	
+	DB $E8,$01,$20,$D8,$3A ; I
+	DB $F0,$01,$20,$DD,$3A ; N
+	DB $F8,$01,$20,$E5,$3A ; V
+	DB $00,$00,$20,$D0,$3A ; A
+	DB $08,$00,$20,$D3,$3A ; D
+	DB $10,$00,$20,$D4,$3A ; E
+	DB $18,$00,$20,$E1,$3A ; R
+	DB $20,$00,$20,$E2,$3A ; S
+	DB $28,$00,$20,$EB,$3A ; .
+	DB $30,$00,$20,$EB,$3A ; .
+	DB $38,$00,$20,$EB,$3A ; .
+	DB $40,$00,$20,$EF,$3A ; Long pause
+	DB $E8,$01,$38,$DC,$3A ; M
+	DB $F0,$01,$38,$E4,$3A ; U
+	DB $F8,$01,$38,$E2,$3A ; S
+	DB $00,$00,$38,$E3,$3A ; T
+	DB $08,$00,$38,$EE,$3A ; Short pause
+	DB $10,$00,$38,$E2,$3A ; S
+	DB $18,$00,$38,$E3,$3A ; T
+	DB $20,$00,$38,$DE,$3A ; O
+	DB $28,$00,$38,$DF,$3A ; P
+	DB $30,$00,$38,$EB,$3A ; .
+	DB $38,$00,$38,$EB,$3A ; .
+	DB $40,$00,$38,$EB,$3A ; .
+	DB $48,$00,$38,$EE,$3A ; Short Pause
+	DB $E8,$01,$50,$D8,$3A ; I
+	DB $F0,$01,$50,$DD,$3A ; N
+	DB $F8,$01,$50,$E5,$3A ; V
+	DB $00,$00,$50,$D0,$3A ; A
+	DB $08,$00,$50,$D3,$3A ; D
+	DB $10,$00,$50,$D4,$3A ; E
+	DB $18,$00,$50,$E1,$3A ; R
+	DB $20,$00,$50,$E2,$3A ; S
+	DB $28,$00,$50,$EB,$3A ; .
+	DB $30,$00,$50,$EB,$3A ; .
+	DB $38,$00,$50,$EB,$3A ; .
+}
 
 ..Spawning
 LDA !swordsSpawned : BEQ ..FirstSet		; If no swords have been spawned, spawn the first set
@@ -507,7 +601,7 @@ STZ $0E54						; Restore the proper enemy index at this location
 RTL
 
 .STATEPOINTERS
-DW .MAINAI_Follow, .MAINAI_AttackPrep, .MAINAI_Downward, .MAINAI_Return, .MAINAI_Nothing, .MAINAI_Spawning
+DW .MAINAI_Follow, .MAINAI_AttackPrep, .MAINAI_Downward, .MAINAI_Return, .MAINAI_Intro, .MAINAI_Spawning
 
 .INSTLISTS
 print pc, " - Boss Instlists"
@@ -847,6 +941,7 @@ Shield:
 .SETUPAI
 LDX $0E54								; Load enemy index
 LDA #.INSTLISTS_IDLE	: STA $0F92,x	; Load idle instruction list and store to memory
+LDA #$2500 : STA $0F86,x				; Make shield intangible and invisible at the start
 RTL
 
 .MAINAI
@@ -1017,11 +1112,11 @@ TYA
 BMI ..NoFloorHit
 PHX : ASL #3 : TAX : PLY		; Shift this left by 3 to align with quadratic speed chart and move to X for indexing. Put projectile index into Y at same time
 LDA $1A6F,y						;\ Get projectile subpixel position
-CLC : ADC $A0CBC7,x				;} If [enemy projectile $1A6F] + [$A0:CBC7 + [X]] >= 10000h:
+CLC : ADC $A0CBC7,x				;| If [enemy projectile $1A6F] + [$A0:CBC7 + [X]] >= 10000h:
 BCC ..NoSubMovement				;/ If subpixel speed does not overflow, skip next step
 PHA								;\
 LDA $1A93,y						;|
-INC A							;} Increment enemy projectile Y position
+INC A							;| Increment enemy projectile Y position
 STA $1A93,y						;|
 PLA								;/
 
@@ -1029,7 +1124,7 @@ PLA								;/
 STA $1A6F,y				 ; Store new subpixel position
 LDA $1A93,y 			 ;\
 CLC             		 ;|
-ADC $A0CBC9,x			 ;} Enemy projectile Y position += Gravity value
+ADC $A0CBC9,x			 ;| Enemy projectile Y position += Gravity value
 STA $1A93,y  			 ;/
 
 
@@ -1039,15 +1134,15 @@ LDA $1A93,y
 CMP #$00C8						;\
 BMI ..NoFloorHit				; If the enemy has not hit the ground, don't prematurely kill it
 LDA #$00C8
-STA $1A93,y  					;} Enemy projectile Y position = C8h
+STA $1A93,y  					;| Enemy projectile Y position = C8h
 LDA #$EB93             			;\
-STA $1A03,y  					;} Enemy projectile function = RTS
+STA $1A03,y  					;| Enemy projectile function = RTS
 LDA #$E208            			;\
-STA $1B47,y  					;} Enemy projectile instruction list pointer = $E208
+STA $1B47,y  					;| Enemy projectile instruction list pointer = $E208
 LDA #$0A00             			;\
-STA $19BB,y  					;} Enemy projectile VRAM tiles index = 0, palette index = 5
+STA $19BB,y  					;| Enemy projectile VRAM tiles index = 0, palette index = 5
 LDA #$0001             			;\
-STA $1B8F,y  					;} Enemy projectile instruction timer = 1
+STA $1B8F,y  					;| Enemy projectile instruction timer = 1
 JSR $EB94    					; Queue small explosion sound effect
 RTS
 ..NoFloorHit
@@ -1157,6 +1252,450 @@ DW $81F8 : DB $F0 : DW $2100	; Top
 DW $81F8 : DB $00 : DW $2102	; Bottom
 }
 
+
+; Original typewriter code by Drewseph
+org !A5Free
+print pc, " - Typewriter AI"
+{
+AREA_TITLE_SHOT_AI:
+;	PHX : LDA $18A6 : ASL A : TAX : LDA $0C04,X : AND #$FFEF : STA $0C04,X : PLX : RTL
+	RTL
+AREA_TITLE_INIT:	
+	LDA.w #GFX_REFRESH
+	STA $00
+	LDA.w #GFX_REFRESH>>8
+	STA $01
+	JSL $818EB2
+
+	LDA $0E54
+	STA !TITLE_INDEX
+	TAX
+	; Speed2 = Event to check and set
+	PHX
+	LDA $0FB6,X : JSL $80818E : LDA $7ED820,X : BIT $05E7 : BNE KILL_AREA_TITLE ; Check to see if it has already been shown
+	PLX
+	LDA $0FB4,x	; Loads enemy Speed
+	ASL A		; Multiplies by 2 to get a valid pointer
+	PHY
+	TAY
+	LDA TITLE_TABLE,y
+	STA $0F92,X	; Stores the gfx pointer to change the message to be shown
+	LDA TITLE_LETTER_COUNT,y
+	STA $0FAC,X	; Stores Maximum Letters in title card
+	LDA TITLE_INIT_DELAY,y
+	STA	$0FB2,X	; Stores a timer, which will Dec each frame
+	LDA TITLE_LIFESPAN,y
+	STA $0FAE,X	; Stores Master lifespan for title card once xray fool tile is touched
+	PLY
+	RTL
+KILL_AREA_TITLE:
+	PLX
+	STZ !TITLE_INDEX
+	STZ $0F78,X
+	RTL
+TITLE_TABLE:
+dw A_CERES_STATION,A_CRATERIA,A_CRATERIA_DEPTHS,A_BRINSTAR,A_NORFAIR
+dw A_LOWER_NORFAIR,A_LOST_CAVERNS,A_MARIDIA,A_TOURIAN_ACCESS,A_TOURIAN
+TITLE_LETTER_COUNT:
+dw $0020,$000A,$0011,$000A,$0009,$000F,$000E,$0009,$0010,$0009
+TITLE_INIT_DELAY:
+dw $FFFF,$FFFF,$003C,$003C,$003C
+dw $003C,$003C,$003C,$003C,$003C
+TITLE_LIFESPAN:
+dw $01E0,$01A4,$01E0,$01A4,$01A4,$01E0,$01E0,$01A4,$01E0,$01A4
+TC_SPACE_PAUSES:		; Time to wait for each different space tile
+dw $0006, $0032, $0064
+
+AREA_TITLE_AI:
+	LDX $0E54		; Loads Current enemy in room
+	LDA $07F3 : CMP #$0021 : BPL + 		; Check to see if the song is at or above set 21 (Mother brain fight) 
+	LDA $0F94,X							; Load enemy instruction timer (lifetime)
+	CMP #$0002							
+	BNE ++								; Continue if not equal to 2
++	;STZ $0F7A,x		; Zero out enemy X position
+	;STZ $0F7E,x		; Zero out enemy Y position
+	STZ $0F78,X 	; Zero out enemy ID (to delete it?)
+	RTL
+++	TXA
+	RTL
+;	$0F7A,x	= Current Enemies X position in room
+;	$0F7E,x	= Current Enemies Y position in room
+;	$7E7024,x = Mirrors Enemy Orientations
+;	$0F92,x = Current Enemy GFX pointer, change this, you change the world!(enemy)
+;	$0F94,x = LIFETIME for title card
+;	$0FB6,X = Speed 2, event bit to check
+;	$0FB4,x = Current Enemy Speed:	Used to determine the Title Card to show
+;	$0FA4,x = Counter for current enemy
+;	$0FB2,x = TIMER: How Long before INCREASE in the letter count in frames
+;	$0FAA,X = LETTER COUNT: INCREASES every time ^ Reaches its max character count
+;	$0FAC,X = MAXIMUM LETTER COUNT:  ^^^ I compared to this evert frame
+				; If equal, then stop increasing
+	
+ AREA_TILE_INIT: ; This is a blank text field
+	DW $0010,AT_BRINSTAR ; AREA_BLANK
+	DW $80ED,AREA_TILE_INIT
+;------------------------------------------------------------------------------------	
+
+; Format: $XX,$01,$YY,$LL,$3A
+; $XX = Letter X position
+; $01 = Negative X bit (Set if to the left of enemy, not if to the right) 
+; $YY = Letter Y position
+; $LL = Letter tile number ('A' = $D0, 'B' = $D1, etc.)
+; $3A = Sprite attributes
+
+print pc, " - Typewriter Spritemaps"
+; Graphics found at $9AEC00 (PC: D6C00)
+ A_CERES_STATION:		; Speed	$0000
+	DW $01A4,AT_CERES_STATION
+	DW $80ED,A_CERES_STATION
+AT_CERES_STATION:	 DW $0020	
+	DB $C8,$01,$C0,$E3,$3A ; T
+	DB $D0,$01,$C0,$D7,$3A ; H
+	DB $D8,$01,$C0,$D4,$3A ; E
+	DB $E0,$01,$C0,$E8,$3A ; Y
+	DB $E8,$01,$C0,$ED,$3A ;  
+	DB $F0,$01,$C0,$D0,$3A ; A
+	DB $F8,$01,$C0,$E1,$3A ; R
+	DB $00,$00,$C0,$D4,$3A ; E
+	DB $08,$00,$C0,$ED,$3A ;  
+	DB $10,$00,$C0,$D2,$3A ; C
+	DB $18,$00,$C0,$DE,$3A ; O
+	DB $20,$00,$C0,$DC,$3A ; M
+	DB $28,$00,$C0,$D8,$3A ; I
+	DB $30,$00,$C0,$DD,$3A ; N
+	DB $38,$00,$C0,$D6,$3A ; G
+	DB $40,$00,$C0,$EB,$3A ; .
+	DB $48,$00,$C0,$EB,$3A ; .
+	DB $50,$00,$C0,$EB,$3A ; .
+	DB $58,$00,$C0,$EE,$3A ; Short pause
+	DB $C8,$01,$D0,$E6,$3A ; W
+	DB $D0,$01,$D0,$D7,$3A ; H
+	DB $D8,$01,$D0,$D0,$3A ; A
+	DB $E0,$01,$D0,$E3,$3A ; T
+	DB $E8,$01,$D0,$ED,$3A ;  
+	DB $F0,$01,$D0,$D3,$3A ; D
+	DB $F8,$01,$D0,$DE,$3A ; O
+	DB $00,$00,$D0,$ED,$3A ;  
+	DB $08,$00,$D0,$D8,$3A ; I
+	DB $10,$00,$D0,$ED,$3A ;  
+	DB $18,$00,$D0,$D3,$3A ; D
+	DB $20,$00,$D0,$DE,$3A ; O
+	DB $28,$00,$D0,$EC,$3A ; ?
+;------------------------------------------------------------------------------------
+ A_CRATERIA:			; Speed	$0001
+	DW $01D4,AT_CRATERIA
+	DW $80ED,A_CRATERIA
+AT_CRATERIA:	 DW $000A	
+	DB $B0,$01,$FC,$EA,$3A ; -
+	DB $B8,$01,$FC,$D2,$3A ; C
+	DB $C0,$01,$FC,$E1,$3A ; R
+	DB $C8,$01,$FC,$D0,$3A ; A
+	DB $D0,$01,$FC,$E3,$3A ; T
+	DB $D8,$01,$FC,$D4,$3A ; E
+	DB $E0,$01,$FC,$E1,$3A ; R
+	DB $E8,$01,$FC,$D8,$3A ; I
+	DB $F0,$01,$FC,$D0,$3A ; A
+	DB $F8,$01,$FC,$EA,$3A ; -
+;------------------------------------------------------------------------------------
+ A_CRATERIA_DEPTHS:	; Speed	$0002
+	DW $01E0,AT_CRATERIA_DEPTHS
+	DW $80ED,A_CRATERIA_DEPTHS
+AT_CRATERIA_DEPTHS:	 DW $0011	
+	DB $78,$01,$FC,$F4,$3A ; -
+	DB $80,$01,$FC,$EA,$3A ; C
+	DB $88,$01,$FC,$F8,$3A ; R
+	DB $90,$01,$FC,$DE,$3A ; A
+	DB $98,$01,$FC,$FA,$3A ; T
+	DB $A0,$01,$FC,$EC,$3A ; E
+	DB $A8,$01,$FC,$F8,$3A ; R
+	DB $B0,$01,$FC,$EE,$3A ; I
+	DB $B8,$01,$FC,$DE,$3A ; A
+	DB $C0,$01,$FC,$F3,$3A ;  
+	DB $C8,$01,$FC,$EB,$3A ; D
+	DB $D0,$01,$FC,$EC,$3A ; E
+	DB $D8,$01,$FC,$FF,$3A ; P
+	DB $E0,$01,$FC,$FA,$3A ; T
+	DB $E8,$01,$FC,$FE,$3A ; H
+	DB $F0,$01,$FC,$F9,$3A ; S
+	DB $F8,$01,$FC,$F4,$3A ; -
+;------------------------------------------------------------------------------------
+ A_BRINSTAR:			; Speed	$0003
+	DW $01A4,AT_BRINSTAR
+	DW $80ED,A_BRINSTAR
+AT_BRINSTAR:	DW $000A	
+	DB $B0,$01,$FC,$F4,$3A	; -
+	DB $B8,$01,$FC,$DF,$3A	; B
+	DB $C0,$01,$FC,$F8,$3A	; R
+	DB $C8,$01,$FC,$EE,$3A	; I
+	DB $D0,$01,$FC,$F6,$3A	; N
+	DB $D8,$01,$FC,$F9,$3A	; S
+	DB $E0,$01,$FC,$FA,$3A	; T
+	DB $E8,$01,$FC,$DE,$3A	; A
+	DB $F0,$01,$FC,$F8,$3A	; R
+	DB $F8,$01,$FC,$F4,$3A	; -
+;------------------------------------------------------------------------------------
+ A_NORFAIR:			; Speed	$0004
+	DW $01A4,AT_NORFAIR
+	DW $80ED,A_NORFAIR
+AT_NORFAIR:		DW $0009	
+	DB $B8,$01,$FC,$F4,$3A ; -
+	DB $C0,$01,$FC,$F6,$3A ; N
+	DB $C8,$01,$FC,$F7,$3A ; O
+	DB $D0,$01,$FC,$F8,$3A ; R
+	DB $D8,$01,$FC,$ED,$3A ; F
+	DB $E0,$01,$FC,$DE,$3A ; A
+	DB $E8,$01,$FC,$EE,$3A ; I
+	DB $F0,$01,$FC,$F8,$3A ; R
+	DB $F8,$01,$FC,$F4,$3A ; -
+;------------------------------------------------------------------------------------
+ A_LOWER_NORFAIR:		; Speed	$0005
+	DW $01E0,AT_LOWER_NORFAIR
+	DW $80ED,A_LOWER_NORFAIR
+AT_LOWER_NORFAIR:	DW $000F	
+	DB $88,$01,$FC,$F4,$3A ; -
+	DB $90,$01,$FC,$EF,$3A ; L
+	DB $98,$01,$FC,$F7,$3A ; O
+	DB $A0,$01,$FC,$FC,$3A ; W
+	DB $A8,$01,$FC,$EC,$3A ; E
+	DB $B0,$01,$FC,$F8,$3A ; R
+	DB $B8,$01,$FC,$F3,$3A ;  
+	DB $C0,$01,$FC,$F6,$3A ; N
+	DB $C8,$01,$FC,$F7,$3A ; O
+	DB $D0,$01,$FC,$F8,$3A ; R
+	DB $D8,$01,$FC,$ED,$3A ; F
+	DB $E0,$01,$FC,$DE,$3A ; A
+	DB $E8,$01,$FC,$EE,$3A ; I
+	DB $F0,$01,$FC,$F8,$3A ; R
+	DB $F8,$01,$FC,$F4,$3A ; -
+;------------------------------------------------------------------------------------
+ A_LOST_CAVERNS:		; Speed	$0006
+	DW $01E0,AT_LOST_CAVERNS
+	DW $80ED,A_LOST_CAVERNS
+AT_LOST_CAVERNS:	 DW $000E	
+	DB $90,$01,$FC,$F4,$3A ; -
+	DB $98,$01,$FC,$EF,$3A ; L
+	DB $A0,$01,$FC,$F7,$3A ; O
+	DB $A8,$01,$FC,$F9,$3A ; S
+	DB $B0,$01,$FC,$FA,$3A ; T
+	DB $B8,$01,$FC,$F3,$3A ;  
+	DB $C0,$01,$FC,$EA,$3A ; C
+	DB $C8,$01,$FC,$DE,$3A ; A
+	DB $D0,$01,$FC,$FD,$3A ; V
+	DB $D8,$01,$FC,$EC,$3A ; E
+	DB $E0,$01,$FC,$F8,$3A ; R
+	DB $E8,$01,$FC,$F6,$3A ; N
+	DB $F0,$01,$FC,$F9,$3A ; S
+	DB $F8,$01,$FC,$F4,$3A ; -
+;------------------------------------------------------------------------------------
+ A_MARIDIA:			; Speed	$0007
+	DW $01A4,AT_MARIDIA
+	DW $80ED,A_MARIDIA
+AT_MARIDIA:	 DW $0009	
+	DB $B8,$01,$FC,$F4,$3A ; -
+	DB $C0,$01,$FC,$F5,$3A ; M
+	DB $C8,$01,$FC,$DE,$3A ; A
+	DB $D0,$01,$FC,$F8,$3A ; R
+	DB $D8,$01,$FC,$EE,$3A ; I
+	DB $E0,$01,$FC,$EB,$3A ; D
+	DB $E8,$01,$FC,$EE,$3A ; I
+	DB $F0,$01,$FC,$DE,$3A ; A
+	DB $F8,$01,$FC,$F4,$3A ; -
+;------------------------------------------------------------------------------------
+ A_TOURIAN_ACCESS:		; Speed	$0008
+	DW $01E0,AT_TOURIAN_ACCESS
+	DW $80ED,A_TOURIAN_ACCESS
+AT_TOURIAN_ACCESS:	 DW $0010	
+	DB $80,$01,$FC,$F4,$3A ; -
+	DB $88,$01,$FC,$FA,$3A ; T
+	DB $90,$01,$FC,$F7,$3A ; O
+	DB $98,$01,$FC,$FB,$3A ; U
+	DB $A0,$01,$FC,$F8,$3A ; R
+	DB $A8,$01,$FC,$EE,$3A ; I
+	DB $B0,$01,$FC,$DE,$3A ; A
+	DB $B8,$01,$FC,$F6,$3A ; N
+	DB $C0,$01,$FC,$F3,$3A ;  
+	DB $C8,$01,$FC,$DE,$3A ; A
+	DB $D0,$01,$FC,$EA,$3A ; C
+	DB $D8,$01,$FC,$EA,$3A ; C
+	DB $E0,$01,$FC,$EC,$3A ; E
+	DB $E8,$01,$FC,$F9,$3A ; S
+	DB $F0,$01,$FC,$F9,$3A ; S
+	DB $F8,$01,$FC,$F4,$3A ; -
+;------------------------------------------------------------------------------------
+ A_TOURIAN:			; Speed	$0009
+	DW $01A4,AT_TOURIAN
+	DW $80ED,A_TOURIAN
+AT_TOURIAN:	 DW $0009	
+	DB $B8,$01,$FC,$F4,$3A ; -
+	DB $C0,$01,$FC,$FA,$3A ; T
+	DB $C8,$01,$FC,$F7,$3A ; O
+	DB $D0,$01,$FC,$FB,$3A ; U
+	DB $D8,$01,$FC,$F8,$3A ; R
+	DB $E0,$01,$FC,$EE,$3A ; I
+	DB $E8,$01,$FC,$DE,$3A ; A
+	DB $F0,$01,$FC,$F6,$3A ; N
+	DB $F8,$01,$FC,$F4,$3A ; -
+
+}
+
+; Other Typewriter-necessary code
+{
+ ; HIJACK POINT FOR TITLE CARD
+org $818AB8
+	JMP $F780
+	NOP
+
+org $81F780
+	PHA
+	LDA $0F78,X					; Loads Current Enemy
+	CMP !TITLE_HEADER_LOCATION	; Checks if its a Title Card
+	BEQ TC_CONTINUE				
+	CMP !BOSS_HEADER_LOCATION	; Checks if its a Sammer Guy Boss
+	BNE TC_WRONG_ENEMY
+	LDA !state,x : CMP #$0008	; Check to see if the Sammer Guy Boss is in its intro state
+	BEQ TC_CONTINUE
+TC_WRONG_ENEMY:
+	JMP TC_HIJACK_END			; branch to end if Not
+	
+TC_CONTINUE:
+	PLA
+	LDA $0FB2,X	; Loads Timer
+	BNE ++
+	PHX			; Save X for later
+	LDA $0FB6,X	; Checks speed 2 for Event bit to check
+	BEQ +
+	JSL $80818E
+	LDA $7ED820,X
+	ORA $05E7
+	STA $7ED820,X	; Turns event bit on
++	PLX			; Restore X
+	LDA $0FAA,X	; Loads Letter count
+	CMP $0FAC,X	; Compares ot max letter count
+	BNE +		; Branch if not equal
+	BRA TC_ROUTINE_END
+
++	INC $0FAA,X	; Increment letter count
+	LDA #$0006
+	STA $0FB2,X	; Reset timer to 6 frames
+	
+	
+	LDA $0FB2,X
+	CMP #$0200
+	BPL +
+	LDA $0FAE,X
+	BEQ +
+	STZ $0FAE,X
+	STA $0F94,X
+	
++	LDA $0FAA,X					; Loads Letter count
+	ASL #2 : CLC : ADC $0FAA,x 	; Multiply by 5
+	SEC : SBC #$0002			; Add 2 to get the right byte
+	ADC $0F8E,x
+	PHX : TAX : LDA $0000,x		; Load the value at the offset
+	PLX 						; Restore X
+	CMP #$ED00 
+	BPL TC_ROUTINE_SPACE		; Go to handler if character encountered is a space
+	LDA #$000D					; Queue and play Typewriter Sound
+	JSL $809125
+	BRA TC_ROUTINE_END
+	
+++	LDA $0FB2,X
+	CMP #$0200
+	BCS TC_ROUTINE_END
+	DEC $0FB2,X
+TC_ROUTINE_END:
+	STZ $0FA4,x
+	LDA $0FAA,X	; Loads Letter count
+	PHY
+	JMP $8ABC	; Return to add spritemap function	
+	
+TC_HIJACK_END:
+	PLA
+	PHY
+	LDA $0000,y	; Loads original Letter count
+	JMP $8ABC	; Return to add spritemap function
+	
+TC_ROUTINE_SPACE:
+	XBA : AND #$00FF			; Move the tile number to the less significant byte and focus on it
+	SEC : SBC #$00ED			; Get how many tiles above the base space it is
+	ASL : PHX : TAX				; Store X for safekeeping and move A to it
+	LDA TC_SPACE_PAUSES,x		; Load the corresponding space wait value
+	PLX : STA $0fB2,X			; Restore X and overwrite the previous timer value with this
+	JMP TC_ROUTINE_END
+
+org $A0C284
+	JSR TC_LIFESPAN			; Hijack from processing enemy instrutions
+	
+; AREA TITLE MOVES WITH SCREEN
+org $A08859
+	JSR AT_MOVE_SCREEN		; Hijack from drawing Samus and projectiles
+	NOP
+	
+org $A0FA00 
+ ; TITLE CARD LIFESPAN SETUP
+TC_LIFESPAN:
+	LDA $0F78,x						; Loads Current Enemy	
+	CMP !TITLE_HEADER_LOCATION		; Checks if its a Title Card
+	BEQ ++							; Skip if not
+	CMP !BOSS_HEADER_LOCATION		; Checks if its a Sammer Guy Boss
+	BNE +
+	LDA !state,x : CMP #$0008	; Check to see if the Sammer Guy Boss is in its intro state
+	BEQ ++
+	JMP +						; Skip if not
+++	LDA #$7FFF
+	RTS
++	LDA $0000,y
+	RTS
+	
+ ; AREA TITLE MOVES WITH SCREEN CODE
+	AT_MOVE_SCREEN:
+	PHX
+	LDX !TITLE_INDEX
+	LDA $0F78,x						; Loads Current Enemy	
+	CMP !TITLE_HEADER_LOCATION		; Checks if it's a Title Card
+	BNE +							; Skip if not
+	LDA $0F86,x	: AND #$00FF		; Loads enemy "special" value and isolates second byte
+	BNE +							; If zero, follows camera. Otherwise, stays in place
+	LDA $0911						; Load screen horizonal position
+	CLC
+	ADC #$00F8
+	STA $0F7A,x						; Apply with offset to the horizonal position
+	LDA $0915						; Load screen vertical position
+	CLC
+	ADC #$00D8
+	STA $0F7E,x						; Apply with offset to the enemy's vertical position
++	PLX
+	JSL $93834D		; Draw bombs and projectile explosions (Overwritten action)
+	RTS
+}
+
+; Block inside reaction - spike air - jump table
+org $9498AC
+dw $97D8, $9812, $9866, TC_TRIGGER, $97D7, $97D7, $97D7, $97D7, $97D7, $97D7, $97D7, $97D7, $97D7, $97D7, $97D7, $97D7
+
+; Free space in Bank $94
+org $94B19F
+ TC_TRIGGER:				; BTS 03
+	PHX
+	LDX !TITLE_INDEX
+	LDA $0F78,x
+	CMP !TITLE_HEADER_LOCATION	; Checks if it's a Title Card
+	BEQ ++
+	CMP !BOSS_HEADER_LOCATION	; Checks if it's a Sammer Guy Boss
+	BNE +
+	LDA !state,x : CMP #$0008	; Check to see if the Sammer Guy Boss is in its intro state
+	BEQ ++
+	JMP +						; Skip if not
+++	LDA $0FAE,X					; Ensure the master lifespan of the enemy is not currently 0
+	BEQ +
+	STZ $0FAE,X					; Zero out the master lifespan of the enemy
+	STA $0F94,X					; Store the original master lifespan to the current lifespan
+	LDA #$0000
+	STA $0FB2,X					; Zero out the time before typing the next character
++	PLX
+	RTS
+	
+
 org !B4Free	;free space in $B4 for weaknesses and drops
 {
 WEAK:
@@ -1181,6 +1720,12 @@ db $00, $00, $00, $00, $00, $00
 db $30, $30, $20, $4F, $10, $10
 }
 
+ ; BANK $92 Free Space
+org !92Free
+ ; GFX_REFRESH
+GFX_REFRESH:
+	dw $0600,$EC00,$009A,$6D00,$FFFF
+	
 org !GraphSp ;Free Space for Graphics
 GFX:
 .Sword
@@ -1192,6 +1737,10 @@ incbin ".\Graphics\Sammer Guy Shield.gfx"
 .Shuriken
 incbin ".\Graphics\Shuriken.gfx"
 print pc, " - End of GFX"
+
+; Put alphabet GFX in general GFX
+org $9AEC00
+incbin ".\Graphics\Alphabet.gfx"
 
 ; Fix improper indexing for projectile block dud shots
 org $A09A3D 
