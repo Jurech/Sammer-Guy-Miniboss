@@ -3,6 +3,7 @@
 lorom
 
 !86Free = $86F4A6	; For enemy projectiles
+!8DFree = $8DD9D0	; Palette FX Object
 !92Free = $92EE00	; For title card stuff
 !A0Free = $A0F813	; For enemy headers
 !A2Free = $A2F498	; AI code
@@ -51,28 +52,28 @@ print pc, " - Sword Enemy Header"
 ;       Palette             Damage        Y Radius        Hurt AI Time   Boss Value          Number of parts  Main AI              Hurt AI       Xray AI      Unused         PB AI        Unused       Touch AI        Unused                Layer Priority          Weakness Pointer
 ;GFX Size |          Health |      X Radius  |       AI Bank |     Hurt SFX  |  Setup           |   Unused    |         Grapple AI |  Frozen AI  | Death Anim. |   Unused    |   Unknown   |   Unused    |   Shot AI   |   GFX Address           | Drops Pointer       |          Name Pointer
 ;  |      |          |      |      |      |          |    |        |      |      |              |      |      |             |      |      |      |      |      |      |      |      |      |      |      |      |      |          |              |        |            |           |
-DW $0400, Sword_PAL, $0100, $0032, $0004, $0010 : DB $A3, $00 : DW $0000, $0000, Sword_SETUPAI, $0001, $0000, Sword_MAINAI, $804C, $804C, $8041, $0000, $0000, $0000, $0000, $804C, $0000, $0000, $0000, $8023, $802D, $0000 : DL GFX_Sword : DB $02 : DW DROPS_Sword, WEAK_Sword, $E1DB
+DW $0400, Sword_PAL, $0100, $0048, $0004, $0010 : DB $A3, $00 : DW $0000, $0000, Sword_SETUPAI, $0001, $0000, Sword_MAINAI, $804C, $804C, $8041, $0000, $0000, $0000, $0000, $804C, $0000, $0000, $0000, $8023, $802D, $0000 : DL GFX_Sword : DB $02 : DW DROPS_Sword, WEAK_Sword, $E1DB
 
 .BossHeader
 print pc, " - Boss Enemy Header"
 ;       Palette             Damage        Y Radius        Hurt AI Time   Boss Value         Number of parts  Main AI             Hurt AI       Xray AI      Unused         PB AI        Unused       Touch AI              Unused               Layer Priority         Weakness Pointer
 ;GFX Size |         Health  |      X Radius  |       AI Bank |     Hurt SFX  |  Setup          |   Unused    |        Grapple AI |  Frozen AI  | Death Anim. |   Unused    |   Unknown   |   Unused    |   Shot AI         |   GFX Address          | Drops Pointer      |         Name Pointer
 ;  |      |         |       |      |      |          |    |        |      |      |             |      |      |            |      |      |      |      |      |      |      |      |      |      |      |      |            |          |             |        |           |          |
-DW $0400, Boss_PAL, !maxHP, $0032, $0010, $0014 : DB $A3, $00 : DW $0000, $0000, Boss_SETUPAI, $0001, $0000, Boss_MAINAI, $804C, $804C, $8041, $0000, $0003, $0000, $0000, $804C, $0000, $0000, $0000, $8023, Boss_SHOTAI, $0000 : DL GFX_Boss : DB $02 : DW DROPS_Boss, WEAK_Boss, $E1DB
+DW $0400, Boss_PAL, !maxHP, $0064, $0010, $0014 : DB $A3, $00 : DW $0000, $0000, Boss_SETUPAI, $0001, $0000, Boss_MAINAI, $804C, $804C, $8041, $0000, $0003, $0000, $0000, $804C, $0000, $0000, $0000, $8023, Boss_SHOTAI, $0000 : DL GFX_Boss : DB $02 : DW DROPS_Boss, WEAK_Boss, $E1DB
 
 .ShieldHeader
 print pc, " - Shield Enemy Header"
 ;       Palette              Damage        Y Radius        Hurt AI Time   Boss Value           Number of parts  Main AI               Hurt AI       Xray AI      Unused         PB AI        Unused       Touch AI        Unused                 Layer Priority           Weakness Pointer
 ;GFX Size |           Health |      X Radius  |       AI Bank |     Hurt SFX  |  Setup            |   Unused    |          Grapple AI |  Frozen AI  | Death Anim. |   Unused    |   Unknown   |   Unused    |   Shot AI   |   GFX Address            | Drops Pointer        |           Name Pointer
 ;  |      |           |      |      |      |          |    |        |      |      |               |      |      |              |      |      |      |      |      |      |      |      |      |      |      |      |      |          |               |        |             |            |
-DW $0200, Shield_PAL, $0100, $0032, $0012, $0004 : DB $A3, $00 : DW $0000, $0000, Shield_SETUPAI, $0001, $0000, Shield_MAINAI, $804C, $804C, $8041, $0000, $0000, $0000, $0000, $804C, $0000, $0000, $0000, $8023, $802D, $0000 : DL GFX_Shield : DB $02 : DW DROPS_Shield, WEAK_Shield, $E1DB
+DW $0200, Shield_PAL, $0100, $0064, $0012, $0004 : DB $A3, $00 : DW $0000, $0000, Shield_SETUPAI, $0001, $0000, Shield_MAINAI, $804C, $804C, $8041, $0000, $0000, $0000, $0000, $804C, $0000, $0000, $0000, $8023, $802D, $0000 : DL GFX_Shield : DB $02 : DW DROPS_Shield, WEAK_Shield, $E1DB
 
 .ShurikenHeader
 print pc, " - Shuriken Enemy Header"
 ;       Palette              Damage        Y Radius        Hurt AI Time   Boss Value             Number of parts  Main AI       Hurt AI       Xray AI      Unused         PB AI        Unused       Touch AI        Unused                 Layer Priority           Weakness Pointer
 ;GFX Size |             Health |      X Radius  |       AI Bank |     Hurt SFX  |  Setup              |   Unused    |  Grapple AI |  Frozen AI  | Death Anim. |   Unused    |   Unknown   |   Unused    |   Shot AI   |   GFX Address            | Drops Pointer        |           Name Pointer
 ;  |      |             |      |      |      |          |    |        |      |      |                 |      |      |      |      |      |      |      |      |      |      |      |      |      |      |      |      |          |               |        |             |            |
-DW $0400, Shuriken_PAL, $0100, $0032, $0008, $0008 : DB $A2, $00 : DW $0000, $0000, Shuriken_SETUPAI, $0001, $0000, $B40F, $800F, $804C, $8041, $0000, $0000, $0000, $0000, $8037, $0000, $0000, $0000, $8023, $802D, $0000 : DL GFX_Shuriken : DB $02 : DW DROPS_Shuriken, WEAK_Shuriken, $E1DB
+DW $0400, Shuriken_PAL, $0100, $0048, $0008, $0008 : DB $A2, $00 : DW $0000, $0000, Shuriken_SETUPAI, $0001, $0000, $B40F, $800F, $804C, $8041, $0000, $0000, $0000, $0000, $8037, $0000, $0000, $0000, $8023, $802D, $0000 : DL GFX_Shuriken : DB $02 : DW DROPS_Shuriken, WEAK_Shuriken, $E1DB
 
 .TypewriterHeader
 print pc, " - Typewriter Enemy Header"
@@ -481,7 +482,10 @@ print pc, " - Boss IntroAI"
 LDA $0FAE : BNE ..Run_Text
 LDA $0F94 : CMP #$0001 : BNE ..Run_Text	; If both master = 0 and current lifespan = 1, spawn the boss
 LDA #$0005 : JSL $808FC1				; Trigger boss music change
-LDA #$0010 : STA $0F9C					; Set enemy flash timer to 16 for boss
+JSL $90A7E2								; Disable the minimap
+LDA #$0018 : STA $0F9C					; Set enemy flash timer to 24 for boss
+LDY #$D9D0 : JSL $8DC4E9				; Spawn palette FX Object for background flash
+LDY #$D9D4 : JSL $8DC4E9				; Spawn palette FX Object for door flash
 LDA #.INSTLISTS_SPAWNING : STA $0F92	; Load spawning spritemap
 LDA #$0001 : STA $0F94					; Set spritemap timer to 1
 LDA #$0080 : STA !timer					; Set timer to $0080
@@ -638,6 +642,7 @@ DW $0010, .SPM_IDLE1, !sleep
 
 .SPM
 print pc, " - Boss Spritemaps"
+{
 ..IDLE1
 DW $0013
 
@@ -931,7 +936,7 @@ DW $0005 : DB $07 : DW $611C	; Right hand (Down)
 
 DW $0002 : DB $0B : DW $6117	; Right foot
 DW $01F6 : DB $0B : DW $2117	; Left foot
-
+}
 .PAL
 db $00,$00,$2E,$1B,$C4,$12,$43,$1A,$00,$00,$75,$42,$FF,$7F,$44,$08,$A7,$08,$5F,$7B,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
 }
@@ -1076,7 +1081,7 @@ DW $01F8 : DB $FC : DW $210D	; Left
 DW $01F0 : DB $FC : DW $210C	; Leftmost
 
 .PAL
-db $00,$00,$FF,$7F,$DE,$7B,$BD,$77,$0C,$21,$46,$08,$9F,$33,$1E,$17,$DC,$0E,$5A,$7F,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
+db $00,$00,$FF,$7F,$DE,$7B,$BD,$77,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
 }
 
 
@@ -1130,24 +1135,28 @@ STA $1A93,y  			 ;/
 
 
 TYX
-LDA $1A93,y
-CMP #$00C8						;\
+LDA $1A93,y : CMP #$00C8
 BMI ..NoFloorHit				; If the enemy has not hit the ground, don't prematurely kill it
-LDA #$00C8
-STA $1A93,y  					;| Enemy projectile Y position = C8h
-LDA #$EB93             			;\
-STA $1A03,y  					;| Enemy projectile function = RTS
-LDA #$E208            			;\
-STA $1B47,y  					;| Enemy projectile instruction list pointer = $E208
-LDA #$0A00             			;\
-STA $19BB,y  					;| Enemy projectile VRAM tiles index = 0, palette index = 5
-LDA #$0001             			;\
-STA $1B8F,y  					;| Enemy projectile instruction timer = 1
+LDA #$00C8 : STA $1A93,y  		; Enemy projectile Y position = C8h
+LDA #$EB93 : STA $1A03,y  		; Enemy projectile function = RTS
+LDA #$E208 : STA $1B47,y  		; Enemy projectile instruction list pointer = $E208
+LDA #$0A00 : STA $19BB,y  		; Enemy projectile VRAM tiles index = 0, palette index = 5
+LDA #$0001 : STA $1B8F,y  		; Enemy projectile instruction timer = 1
 JSR $EB94    					; Queue small explosion sound effect
+LDA !swordPosition,x
+CMP #$0006 : BEQ ..FinalSword	; If this is the last sword on the list, perform final procedures
 RTS
 ..NoFloorHit
 INC !projectileTimer,x			; Increment this projectile's timer
 RTS
+
+..FinalSword
+STZ $0E52						; Unlock the doors
+LDA #$0004 : JSL $808FC1		; Reset music
+STZ $05F7						; Enable the minimap
+LDY #$D9D8 : JSL $8DC4E9		; Spawn palette FX Object for color reset
+RTS
+
 
 ..Stopped
 TYX
@@ -1773,3 +1782,64 @@ DL !Song_Location
 ;then, INCnspc your nspc files
 ORG !Song_Location
 INCBIN !Song_Title
+
+org !8DFree
+print pc, " - Palette FX Objects"
+DW $C685,BACKGROUND_FLASH
+DW $C685,DOOR_FLASH
+DW $C685,BACKGROUND_RETURN
+BACKGROUND_FLASH:
+DW $C655,$0082		; Start on color 1 of palette 4
+DW $0003    ;| Skip colors 2 and 3                                 | Skip colors C, D, and E
+	DW $294F,$C599,$252E,$210C,$1CEB,$18C9,$1087,$1085,$0843,$0421,$C5A2,$0000
+	DW $C595 		; Done
+DW $0003
+	DW $4215,$C599,$3DF4,$39D2,$35B1,$318F,$294D,$294B,$2109,$1CE7,$C5A2,$18C6
+	DW $C595 		; Done
+DW $0003
+	DW $5ADB,$C599,$56BA,$5298,$4E77,$4A55,$4213,$4211,$39CF,$35AD,$C5A2,$318C
+	DW $C595 		; Done
+DW $0003
+	DW $739F,$C599,$6F7F,$6B5E,$673D,$631B,$5AD9,$5AD7,$5295,$4E73,$C5A2,$4A52
+	DW $C595 		; Done
+DW $0003
+	DW $5ADB,$C599,$56BA,$5298,$4E77,$4A55,$4213,$4211,$39CF,$35AD,$C5A2,$318C
+	DW $C595 		; Done
+DW $0003
+	DW $4215,$C599,$3DF4,$39D2,$35B1,$318F,$294D,$294B,$2109,$1CE7,$C5A2,$18C6
+	DW $C595 		; Done
+DW $0003
+	DW $294F,$C599,$252E,$210C,$1CEB,$18C9,$1087,$1085,$0843,$0421,$C5A2,$0000
+	DW $C595 		; Done
+	DW $C5CF		; Delete
+DOOR_FLASH:
+DW $C655,$0028		; Start on color 4 of palette 1
+DW $0003
+	DW $5EBB,$3DB3,$292E,$1486
+	DW $C595 		; Done
+DW $0003
+	DW $777F,$5679,$41F4,$2D4C
+	DW $C595 		; Done
+DW $0003
+	DW $7FFF,$6F3F,$5ABA,$4612
+	DW $C595 		; Done
+DW $0003
+	DW $7FFF,$7FFF,$737F,$5ED8
+	DW $C595 		; Done
+DW $0003
+	DW $7FFF,$6F3F,$5ABA,$4612
+	DW $C595 		; Done
+DW $0003
+	DW $777F,$5679,$41F4,$2D4C
+	DW $C595 		; Done
+DW $0003
+	DW $5EBB,$3DB3,$292E,$1486
+	DW $C595 		; Done
+	DW $C5CF		; Delete
+BACKGROUND_RETURN:
+DW $C655,$0082		; Start on color 1 of palette 4
+DW $0001    ;| Skip colors 2 and 3                                 | Skip colors C, D, and E
+	DW $3D4A,$C599,$3929,$3108,$2CE7,$24C6,$1C84,$1484,$0C42,$0421,$C5A2,$0000
+	DW $C595 		; Done
+	DW $C5CF		; Delete
+print pc, " - Palette FX Object End"
