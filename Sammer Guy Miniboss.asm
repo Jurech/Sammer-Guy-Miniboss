@@ -8,6 +8,7 @@ lorom
 !A0Free = $A0F813	; For enemy headers
 !A2Free = $A2F498	; AI code
 !A3Free = $A3F3F5	; AI code
+!A4Free = $A4F6C0	; AI code
 !A5Free = $A5F970	; AI code
 !B4Free = $B4F4E0	; For drops/weaknesses
 
@@ -22,7 +23,7 @@ lorom
 !bossLoc = $0FAC			; Variable indicating what state the boss' location is in
 !swordsSpawned = $0FAE		; A variable indicating which swords the boss has spawned
 !floatState = $0FB0			; A variable used to determine which direction the boss is floating in and how quickly
-
+!paletteIndex = $0FB2		; A variable used to determine which palette the boss should be using
 
 !HPComparitor = EnemyHeaders_BossHeader+4	; A variable used to store the initial max HP of the boss to compare it with the current HP for speed calculations
 
@@ -66,7 +67,7 @@ print pc, " - Shield Enemy Header"
 ;       Palette              Damage        Y Radius        Hurt AI Time   Boss Value           Number of parts  Main AI               Hurt AI       Xray AI      Unused         PB AI        Unused       Touch AI        Unused                 Layer Priority           Weakness Pointer
 ;GFX Size |           Health |      X Radius  |       AI Bank |     Hurt SFX  |  Setup            |   Unused    |          Grapple AI |  Frozen AI  | Death Anim. |   Unused    |   Unknown   |   Unused    |   Shot AI   |   GFX Address            | Drops Pointer        |           Name Pointer
 ;  |      |           |      |      |      |          |    |        |      |      |               |      |      |              |      |      |      |      |      |      |      |      |      |      |      |      |      |          |               |        |             |            |
-DW $0200, Shield_PAL, $0100, $0064, $0012, $0004 : DB $A3, $00 : DW $0000, $0000, Shield_SETUPAI, $0001, $0000, Shield_MAINAI, $804C, $804C, $8041, $0000, $0000, $0000, $0000, $804C, $0000, $0000, $0000, $8023, $802D, $0000 : DL GFX_Shield : DB $02 : DW DROPS_Shield, WEAK_Shield, $E1DB
+DW $0200, Shield_PAL, $0100, $0064, $0012, $0004 : DB $A4, $00 : DW $0000, $0000, Shield_SETUPAI, $0001, $0000, Shield_MAINAI, $804C, $804C, $8041, $0000, $0000, $0000, $0000, $804C, $0000, $0000, $0000, $8023, $802D, $0000 : DL GFX_Shield : DB $02 : DW DROPS_Shield, WEAK_Shield, $E1DB
 
 .ShurikenHeader
 print pc, " - Shuriken Enemy Header"
@@ -229,7 +230,7 @@ DW $81F8 : DB $F0 : DW $2100	; Top
 DW $81F8 : DB $00 : DW $2102	; Bottom
 
 .PAL
-db $00,$00,$39,$7B,$C6,$30,$9E,$23,$0C,$21,$46,$08,$9F,$33,$1E,$17,$DC,$0E,$5A,$7F,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
+DW $0000,$339F,$1F5E,$0EDF,$065C,$7F7C,$7B39,$76F6,$30C6,$1CEC,$0846,$0000,$0000,$0000,$0000,$0000
 }
 
 ; State Table:
@@ -601,8 +602,47 @@ LDX #$0100 : STX $0E54			; Trick the game to thinking it's working with Enemy 4 
 STZ $0F8C,x						; Set this enemy's HP to 0
 JSL $A0A643						; Call Enemy Shot AI to kill it
 STZ $0E54						; Restore the proper enemy index at this location
-..NotDead
 RTL
+..NotDead
+JSR ..PalChanges
+RTL
+
+print pc, " - Boss PaletteAI"
+..PalChanges
+LDA !paletteIndex		;\
+CMP #$0010              ;| If [enemy health-based palette index] = 10h: return
+BEQ ...Return       	;/
+TAY                     ;\
+LDA $0F8C	 			;|
+CMP .PALTHRESHOLDS,y  	;| If [enemy health] >= [$981B + [enemy health-based palette index]]: return
+BPL ...Return      	 	;/
+LDA !paletteIndex		;\
+ASL #4                  ;| $12 = [enemy health-based palette index] * 10h
+STA $12      			;/
+LDA $0F96	  			;\
+LSR #4                  ;| $14 = [enemy palette index] / 10h + 100h (palette data offset)
+CLC                     ;|
+ADC #$0100              ;|
+STA $14      			;/
+
+...LOOP
+LDY $12      			;\
+LDX $14      			;|
+LDA .HEALTHPALETTES,y  	;| $7E:C000 + [$14] = [$971B + [$12]]
+STA $7EC000,x			;/
+INC $12      			;\
+INC $12      			;| $12 += 2
+INC $14      			;\
+INC $14      			;| $14 += 2
+LDA $14      			;\
+CMP #$0140 : BNE ...LOOP;| If [$14] != 140h: go to LOOP
+LDX $0E54    			;\
+LDA !paletteIndex		;|
+INC A                   ;| Enemy health-based palette index += 2
+INC A                   ;|
+STA !paletteIndex		;/
+...Return
+RTS
 
 .STATEPOINTERS
 DW .MAINAI_Follow, .MAINAI_AttackPrep, .MAINAI_Downward, .MAINAI_Return, .MAINAI_Intro, .MAINAI_Spawning
@@ -938,9 +978,23 @@ DW $0002 : DB $0B : DW $6117	; Right foot
 DW $01F6 : DB $0B : DW $2117	; Left foot
 }
 .PAL
-db $00,$00,$2E,$1B,$C4,$12,$43,$1A,$00,$00,$75,$42,$FF,$7F,$44,$08,$A7,$08,$5F,$7B,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
+DW $3800,$724E,$59CB,$458A,$0000,$4275,$3612,$08A7,$0844,$335C,$7FFF,$0000,$0000,$0000,$0000,$0000
+
+.PALTHRESHOLDS
+dw $0E00, $0C00, $0A00, $0800, $0600, $0400, $0200, $0000, $FFFF  ; Terminator
+
+.HEALTHPALETTES
+dw $3800, $724E, $59CB, $458A, $0000, $4275, $3612, $08A7, $0844, $335C, $7FFF, $0000, $0000, $0000, $0000, $0000
+dw $3800, $6610, $4D8C, $3D4B, $0000, $4274, $3611, $08A7, $0844, $3B5C, $7FFF, $0000, $0000, $0000, $0000, $0000
+dw $3800, $59F2, $456E, $352C, $0000, $4673, $3A10, $08A7, $0844, $435C, $7FFF, $0000, $0000, $0000, $0000, $0000
+dw $3800, $4DB4, $392F, $2CED, $0000, $4A72, $3E0F, $08A7, $0844, $4B5C, $7FFF, $0000, $0000, $0000, $0000, $0000
+dw $3800, $4196, $3111, $24CF, $0000, $4E71, $420E, $08A7, $0844, $537C, $7FFF, $0000, $0000, $0000, $0000, $0000
+dw $3800, $3578, $24D3, $1CB0, $0000, $4E70, $420D, $08A7, $0844, $5B7C, $7FFF, $0000, $0000, $0000, $0000, $0000
+dw $3800, $293A, $1CB4, $1471, $0000, $526F, $460C, $08A7, $0844, $637C, $7FFF, $0000, $0000, $0000, $0000, $0000
+dw $3800, $14FE, $0858, $0434, $0000, $5A6E, $4E0B, $08A7, $0844, $739C, $7FFF, $0000, $0000, $0000, $0000, $0000
 }
 
+org !A4Free
 Shield:
 {
 .SETUPAI
