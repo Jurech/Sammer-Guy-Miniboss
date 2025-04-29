@@ -282,9 +282,12 @@ BRA ..CheckHP
 JMP ..StartPrep
 
 ..CheckHP
+LDA !swordsSpawned 
+CMP #$0002 : BEQ ..Flotation			; If both sets of swords have been spawned, skip the next chunk of code
 LDA $0F8C								; Load the enemy's current HP
 CMP !secPhaseHP : BPL ..Flotation		; Check to see if the boss is below 1/2 of its max HP
 LDA #$0058 : STA !minDis				; Increase minimum distance the boss can be from the walls to make room for the second set of swords
+JMP ..SkipThrow                         ; If prepping for the phase shift, do not run flotation or shuriken code
 
 ..Flotation
 ; Have boss float up and down
@@ -386,7 +389,7 @@ LDA $0F7A						; Get enemy X position
 CLC : ADC !minDis				; Add the miminum distance from walls
 CMP #$0100 : BEQ ..TFRight 		; Compare it with the right edge of the first scroll.
 CMP #$0101 : BEQ ..TFRight		
-BPL ..Left						; If Difference =  or 1, set variable. If Difference < 0, move right
+BPL ..Left						; If Difference = 0 or 1, set variable. If Difference < 0, move left
 LDA #$0000 : STA !bossLoc		; Set BossLoc to say that the boss is centered and run like normal
 BRA ..CheckPhaseShift
 
@@ -616,7 +619,15 @@ TAY                     ;\
 LDA $0F8C	 			;|
 CMP .PALTHRESHOLDS,y  	;| If [enemy health] >= [$981B + [enemy health-based palette index]]: return
 BPL ...Return      	 	;/
-LDA !paletteIndex		;\
+
+...SkipCheck
+CMP .PALTHRESHOLDS+2,y  ;\
+BPL ...ShiftPAL			;|
+INY #2					;| If the enemy has passed a second health threshold, increment Y and check again
+JMP ...SkipCheck		;/
+
+...ShiftPAL
+TYA						;\
 ASL #4                  ;| $12 = [enemy health-based palette index] * 10h
 STA $12      			;/
 LDA $0F96	  			;\
@@ -651,9 +662,17 @@ DW .MAINAI_Follow, .MAINAI_AttackPrep, .MAINAI_Downward, .MAINAI_Return, .MAINAI
 print pc, " - Boss Instlists"
 ..IDLE
 DW $0008, .SPM_EXTENDING
+DW $0010, .SPM_IDLE1
+DW $0020, .SPM_IDLE2
+DW $0010, .SPM_IDLE1
+DW $0030, .SPM_THRUSTING
 DW $0010, .SPM_IDLE1, !sleep
 ..IDLE2
 DW $0008, .SPM_RAISING
+DW $0010, .SPM_IDLE1
+DW $0020, .SPM_IDLE2
+DW $0010, .SPM_IDLE1
+DW $0030, .SPM_THRUSTING
 DW $0010, .SPM_IDLE1, !sleep
 ..SPAWNING
 DW $0008, .SPM_EXTENDING
@@ -701,6 +720,35 @@ DW $0008 : DB $FC : DW $6116	; Right helmet base
 
 DW $81F0 : DB $EC : DW $2100	; Top Left helmet
 DW $01F0 : DB $FC : DW $2116	; Left helmet base
+
+DW $0000 : DB $FF : DW $6105	; Right shoulder
+DW $01F8 : DB $FF : DW $2105	; Left shoulder
+DW $0007 : DB $07 : DW $6115	; Right hand
+DW $01F1 : DB $07 : DW $2115	; Left hand
+
+DW $81F8 : DB $02 : DW $2103	; Body
+
+DW $0002 : DB $0B : DW $6117	; Right foot
+DW $01F6 : DB $0B : DW $2117	; Left foot
+
+..IDLE2
+DW $0013
+
+DW $0009 : DB $F9 : DW $6106	; Far right mustache
+DW $0001 : DB $F9 : DW $6107	; Near right mustache
+DW $01EF : DB $F9 : DW $2106	; Far left mustache
+DW $01F7 : DB $F9 : DW $2107	; Near left mustache
+
+DW $0000 : DB $F5 : DW $6102	; Upper right face
+DW $01F8 : DB $F5 : DW $2102	; Upper left face
+DW $0000 : DB $FD : DW $6112	; Lower right face
+DW $01F8 : DB $FD : DW $2112	; Lower left face
+
+DW $8000 : DB $ED : DW $6100	; Top Right helmet
+DW $0008 : DB $FD : DW $6116	; Right helmet base
+
+DW $81F0 : DB $ED : DW $2100	; Top Left helmet
+DW $01F0 : DB $FD : DW $2116	; Left helmet base
 
 DW $0000 : DB $FF : DW $6105	; Right shoulder
 DW $01F8 : DB $FF : DW $2105	; Left shoulder
@@ -978,20 +1026,20 @@ DW $0002 : DB $0B : DW $6117	; Right foot
 DW $01F6 : DB $0B : DW $2117	; Left foot
 }
 .PAL
-DW $3800,$724E,$59CB,$458A,$0000,$4275,$3612,$08A7,$0844,$335C,$7FFF,$0000,$0000,$0000,$0000,$0000
+DW $3800, $6A0C, $59CB, $458A, $0000, $4275, $3612, $08A7, $0844, $335C, $7FFF, $0000, $0000, $0000, $0000, $0000
 
 .PALTHRESHOLDS
 dw $0E00, $0C00, $0A00, $0800, $0600, $0400, $0200, $0000, $FFFF  ; Terminator
 
 .HEALTHPALETTES
-dw $3800, $724E, $59CB, $458A, $0000, $4275, $3612, $08A7, $0844, $335C, $7FFF, $0000, $0000, $0000, $0000, $0000
-dw $3800, $6610, $4D8C, $3D4B, $0000, $4274, $3611, $08A7, $0844, $3B5C, $7FFF, $0000, $0000, $0000, $0000, $0000
-dw $3800, $59F2, $456E, $352C, $0000, $4673, $3A10, $08A7, $0844, $435C, $7FFF, $0000, $0000, $0000, $0000, $0000
-dw $3800, $4DB4, $392F, $2CED, $0000, $4A72, $3E0F, $08A7, $0844, $4B5C, $7FFF, $0000, $0000, $0000, $0000, $0000
-dw $3800, $4196, $3111, $24CF, $0000, $4E71, $420E, $08A7, $0844, $537C, $7FFF, $0000, $0000, $0000, $0000, $0000
-dw $3800, $3578, $24D3, $1CB0, $0000, $4E70, $420D, $08A7, $0844, $5B7C, $7FFF, $0000, $0000, $0000, $0000, $0000
-dw $3800, $293A, $1CB4, $1471, $0000, $526F, $460C, $08A7, $0844, $637C, $7FFF, $0000, $0000, $0000, $0000, $0000
-dw $3800, $14FE, $0858, $0434, $0000, $5A6E, $4E0B, $08A7, $0844, $739C, $7FFF, $0000, $0000, $0000, $0000, $0000
+dw $3800, $6A0C, $59CB, $458A, $0000, $4275, $3612, $08A7, $0844, $335C, $7FFF, $0000, $0000, $0000, $0000, $0000
+dw $3800, $5DCE, $4D8C, $3D4B, $0000, $4274, $3611, $08A7, $0844, $3B5C, $7FFF, $0000, $0000, $0000, $0000, $0000
+dw $3800, $51B0, $456E, $352C, $0000, $4673, $3A10, $08A7, $0844, $435C, $7FFF, $0000, $0000, $0000, $0000, $0000
+dw $3800, $4992, $392F, $2CED, $0000, $4A72, $3E0F, $08A7, $0844, $4B5C, $7FFF, $0000, $0000, $0000, $0000, $0000
+dw $3800, $3D74, $3111, $24CF, $0000, $4E71, $420E, $08A7, $0844, $537C, $7FFF, $0000, $0000, $0000, $0000, $0000
+dw $3800, $3156, $24D3, $1CB0, $0000, $4E70, $420D, $08A7, $0844, $5B7C, $7FFF, $0000, $0000, $0000, $0000, $0000
+dw $3800, $2938, $1CB4, $1471, $0000, $526F, $460C, $08A7, $0844, $637C, $7FFF, $0000, $0000, $0000, $0000, $0000
+dw $3800, $14FC, $0858, $0434, $0000, $5A6E, $4E0B, $08A7, $0844, $739C, $7FFF, $0000, $0000, $0000, $0000, $0000
 }
 
 org !A4Free
@@ -1197,11 +1245,18 @@ LDA #$E208 : STA $1B47,y  		; Enemy projectile instruction list pointer = $E208
 LDA #$0A00 : STA $19BB,y  		; Enemy projectile VRAM tiles index = 0, palette index = 5
 LDA #$0001 : STA $1B8F,y  		; Enemy projectile instruction timer = 1
 JSR $EB94    					; Queue small explosion sound effect
+LDA $19D7                       ; Check to see if a fourth enemy projectile ever spawned in the room (Second set of swords spawned)
+BEQ ..QuickKillFailsafe         ; If so, run the code that checks for sword 0002 instead of 0006
 LDA !swordPosition,x
 CMP #$0006 : BEQ ..FinalSword	; If this is the last sword on the list, perform final procedures
 RTS
 ..NoFloorHit
 INC !projectileTimer,x			; Increment this projectile's timer
+RTS
+
+..QuickKillFailsafe
+LDA !swordPosition,x
+CMP #$0002 : BEQ ..FinalSword	; If this is the last sword on the list, perform final procedures
 RTS
 
 ..FinalSword
