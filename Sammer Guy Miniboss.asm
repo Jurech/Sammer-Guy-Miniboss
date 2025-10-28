@@ -41,6 +41,15 @@ lorom
 !maxHP = #$1000
 !secPhaseHP = #$0800
 
+!ShurThrowSound = #$002A
+!SwordPrepSound = #$005E
+!SwordThrustSound = #$0048
+!SwordHitSound = #$0025
+!SwordReturnSound = #$004F
+!SwordSpawnSound = #$000F
+!ShieldHitSound = #$0025
+!Thunderclap = #$0060
+
 !TITLE_HEADER_LOCATION = #$F913
 !BOSS_HEADER_LOCATION = #$F853
 !TITLE_INDEX = $1F5B ; USES THE END OF THE STACK
@@ -60,7 +69,7 @@ print pc, " - Boss Enemy Header"
 ;       Palette             Damage        Y Radius        Hurt AI Time   Boss Value         Number of parts  Main AI             Hurt AI       Xray AI      Unused         PB AI        Unused       Touch AI              Unused               Layer Priority         Weakness Pointer
 ;GFX Size |         Health  |      X Radius  |       AI Bank |     Hurt SFX  |  Setup          |   Unused    |        Grapple AI |  Frozen AI  | Death Anim. |   Unused    |   Unknown   |   Unused    |   Shot AI         |   GFX Address          | Drops Pointer      |         Name Pointer
 ;  |      |         |       |      |      |          |    |        |      |      |             |      |      |            |      |      |      |      |      |      |      |      |      |      |      |      |            |          |             |        |           |          |
-DW $0400, Boss_PAL, !maxHP, $0064, $0010, $0014 : DB $A3, $00 : DW $0000, $0000, Boss_SETUPAI, $0001, $0000, Boss_MAINAI, $804C, $804C, $8041, $0000, $0003, $0000, $0000, $804C, $0000, $0000, $0000, $8023, Boss_SHOTAI, $0000 : DL GFX_Boss : DB $02 : DW DROPS_Boss, WEAK_Boss, $E1DB
+DW $0400, Boss_PAL, !maxHP, $0064, $0010, $0014 : DB $A3, $00 : DW $0069, $0000, Boss_SETUPAI, $0001, $0000, Boss_MAINAI, $804C, $804C, $8041, $0000, $0003, $0000, $0000, $804C, $0000, $0000, $0000, $8023, Boss_SHOTAI, $0000 : DL GFX_Boss : DB $02 : DW DROPS_Boss, WEAK_Boss, $E1DB
 
 .ShieldHeader
 print pc, " - Shield Enemy Header"
@@ -341,6 +350,8 @@ CMP #$0002 : BNE ..OnlyOne      ; If only one set of swords have been spawned, o
 LDY #$0100                      ; Load index of enemy 4 to Y, the second shuriken
 LDA $0F7A,y                     ; Load X position of enemy 4 to A
 CMP #$0100 : BMI ..OnlyOne      ; If enemy is already in area, don't throw again
+LDA !ShurThrowSound 
+JSL $809021                     ; Play throwing sound effect
 LDA $0F7A : STA $0F7A,y         ; X position of enemy 4 = X position of enemy 0
 LDA $0F7E : CLC 
 ADC #$0008 : STA $0F7E,y        ; Y position of enemy 4 = Y position of enemy 0 + 8
@@ -360,6 +371,8 @@ LDA #$0001 : STA $0F94          ; Set spritemap timer to 1
 LDY #$00C0                      ; Load index of enemy 3 to Y, the first shuriken
 LDA $0F7A,y                     ; Load X position of enemy 3 to A
 CMP #$0100 : BMI ..NoThrow      ; If enemy is already in area, don't throw again
+LDA !ShurThrowSound 
+JSL $809021                     ; Play throwing sound effect
 LDA $0F7A : STA $0F7A,y         ; X position of enemy 3 = X position of enemy 0
 LDA $0F7E : CLC 
 ADC #$0008 : STA $0F7E,y        ; Y position of enemy 4 = Y position of enemy 0 + 8
@@ -452,6 +465,8 @@ LDA #$0020 : STA !timer         ; set timer to 20
 LDA #.INSTLISTS_PREPPING 
 STA $0F92                       ; Load raising spritemap
 LDA #$0001 : STA $0F94          ; Set spritemap timer to 1
+LDA !SwordPrepSound 
+JSL $8090A3                     ; Play sword prep sound
 RTL
 
 ..AttackPrep
@@ -466,6 +481,8 @@ CLC : ADC #$0040 : STA !timer   ; set timer to 40 + HP/80 (Range from 40 - 58)
 LDA #.INSTLISTS_THRUSTING 
 STA $0F92                       ; Load thrusting spritemap sequence
 LDA #$0001 : STA $0F94          ; Set spritemap timer to 1
+LDA !SwordThrustSound
+JSL $8090A3                     ; Play sword thrust sound
 RTL
 
 ..Downward
@@ -478,6 +495,8 @@ LDA !state6 : STA !state        ; set state to 6
 LDA #.INSTLISTS_RETURNING
 STA $0F92                       ; Load returning spritemap sequence
 LDA #$0001 : STA $0F94          ; Set spritemap timer to 1
+LDA !SwordReturnSound
+JSL $8090A3                     ; Play the sound
 ..Return
 RTL
 }
@@ -499,6 +518,8 @@ LDA #$2000 : STA $0F86                  ; Make boss tangible and visible
 LDA #$2000 : STA $1006                  ; Make shield tangible and visible
 LDA #$0048 : STA !minDis                ; Set the default minimum distance the boss can be from the walls
 LDA #$0020 : STA !floatState            ; Set the default float state to moving down at full speed, slowing down
+LDA !Thunderclap : JSL $8090A3          ; Play thunderclap sound effect
+LDA !SwordSpawnSound : JSL $809125      ; Play sword spawning sound effect
 RTL
 ..Run_Text
     LDX $0E54                           ; Loads Current enemy in room
@@ -571,6 +592,7 @@ BRA ..End
 LDA #$0040 : STA !timer                  ; set timer to 40
 LDA #.INSTLISTS_SPAWNING : STA $0F92     ; Load spawning spritemap
 LDA #$0001 : STA $0F94                   ; Set spritemap timer to 1
+LDA !SwordSpawnSound : JSL $809125       ; Play sword spawning sound effect
 
 ..End
 DEC !timer                               ; Decrement Timer
@@ -682,7 +704,8 @@ DW $0002, .SPM_RAISING2, !sleep
 ..THRUSTING
 DW $0004, .SPM_RAISING
 DW $0004, .SPM_IDLE1
-DW $0004, .SPM_THRUSTING, !sleep
+DW $0004, .SPM_THRUSTING
+DW $0004, .SPM_THRUSTING2, !sleep
 ..RETURNING
 DW $0008, .SPM_IDLE1
 DW $0008, .SPM_RAISING
@@ -904,6 +927,35 @@ DW $81F8 : DB $02 : DW $2103    ; Body
 DW $0002 : DB $0B : DW $6117    ; Right foot
 DW $01F6 : DB $0B : DW $2117    ; Left foot
 
+..THRUSTING2
+DW $0013
+
+DW $0009 : DB $FA : DW $6106    ; Far right mustache
+DW $0001 : DB $FA : DW $6107    ; Near right mustache
+DW $01EF : DB $FA : DW $2106    ; Far left mustache
+DW $01F7 : DB $FA : DW $2107    ; Near left mustache
+
+DW $0000 : DB $F6 : DW $6102    ; Upper right face
+DW $01F8 : DB $F6 : DW $2102    ; Upper left face
+DW $0000 : DB $FE : DW $6112    ; Lower right face
+DW $01F8 : DB $FE : DW $2112    ; Lower left face
+
+DW $8000 : DB $EE : DW $6100    ; Top Right helmet
+DW $0008 : DB $FE : DW $6116    ; Right helmet base
+
+DW $81F0 : DB $EE : DW $2100    ; Top Left helmet
+DW $01F0 : DB $FE : DW $2116    ; Left helmet base
+
+DW $0000 : DB $00 : DW $6105    ; Right shoulder
+DW $01F8 : DB $00 : DW $2105    ; Left shoulder
+DW $0007 : DB $08 : DW $611B    ; Right hand (Thrusting)
+DW $01F1 : DB $08 : DW $211B    ; Left hand (Thrusting)
+
+DW $81F8 : DB $03 : DW $2103    ; Body
+
+DW $0002 : DB $0B : DW $6117    ; Right foot
+DW $01F6 : DB $0B : DW $2117    ; Left foot
+
 ..LEFTGRAB1
 DW $0013
 
@@ -1078,6 +1130,7 @@ RTL
 LDA $0F7E 
 CLC : ADC #$0018 : STA $0F7E,x    ; Set Y position of enemy to that of enemy 0 + 18
 STA $0FAA,x                       ; Store this Y position to memory. This will be the return height
+STZ $0FAC,x                       ; Reset the collision sound tracker
 RTL
 
 ..AttackPrep
@@ -1100,6 +1153,13 @@ STA $14
 LDA !HPComparitor : SEC : SBC !currHP    ; Get HP of damage dealt to boss
 ASL #3 : STA $12                         ; Apply it to subpixel speed                
 JSL $A0C786                              ; Move enemy down by A speed
+BCC ...NoHit
+LDA $0FAC,x                              ; Check to see if sound has already been made
+BNE ...NoHit
+LDA !ShieldHitSound                      ; Load sword-hitting-ground sound
+STA $0FAC,x                              ; Store nonzero value to variable to indicate sound has been made
+JSL $8090A3                              ; Play the sound
+...NoHit
 RTL
 
 
@@ -1195,7 +1255,7 @@ print pc, " - Sword Projectile InitAI"
 LDA $0F7A : STA $1A4B,y             ; X position of projectile = X position of enemy 0
 LDA $0F7E : STA $1A93,y             ; Y position of projectile = Y position of enemy 0
 LDA $1993 : STA !swordPosition,y    ; Store initialization variable as sword position indicator
-TYX : LDA #$0001 : STA $7EF380,x    ; Attempt to make the projectile immute to shots
+TYX : LDA #$0001 : STA $7EF380,x    ; Make the projectile immute to shots
 RTS
 
 print pc, " - Sword Projectile MainAI"
@@ -1279,7 +1339,8 @@ RTS
 
 ..StartPrep
 LDA $0F7E : STA !returnHeight,x ; Store enemy 0 Y position to memory. This will be the return height
-LDA #$FD00 : STA $1ADB,x        ; Upward Speed = FD Pixels and 00 Subpixels. Store to projectile Y velocity        
+LDA #$FD00 : STA $1ADB,x        ; Upward Speed = FD Pixels and 00 Subpixels. Store to projectile Y velocity
+LDX $0E54 : STZ $0FAA,x         ; Reset the collision sound tracker
 RTS
 
 ..AttackPrep
@@ -1287,7 +1348,7 @@ TYX
 LDA !returnHeight,x             ; Load initial Y Position
 CLC
 SBC !prepheight                    
-CMP $1A93,x : BPL ...SlashReady ; If it has reached !prepheight above the position it started at, stop                
+CMP $1A93,x : BPL ...SlashReady ; If it has reached !prepheight above the position it started at, stop
 JSR $897B                       ; Move enemy up by previously-determined speed
 BRA ...End                        
 ...SlashReady
@@ -1300,6 +1361,14 @@ RTS
 ..Downward
 TYX
 JSR $897B                                ; Move enemy down by previously-determined speed
+BCC ...NoHit
+LDY $0E54                                ; Load enemy index
+LDA $0FAA,y                              ; Check to see if sound has already been made
+BNE ...NoHit
+LDA !SwordHitSound                       ; Load sword-hitting-ground sound
+STA $0FAA,y                              ; Store nonzero value to variable to indicate sound has been made
+JSL $8090A3                              ; Play the sound
+...NoHit
 RTS
 
 
@@ -1950,3 +2019,21 @@ DW $0001    ;| Skip colors 2 and 3                                 | Skip colors
     DW $C595         ; Done
     DW $C5CF         ; Delete
 print pc, " - Palette FX Object End"
+
+;     ii vv pp nn tt
+;     i: Instrument index
+;     v: Volume
+;     p: Panning
+;     n: Note. F6h is a tie
+;     t: Length
+; Thunderclap sound effect (Sound 60h library 2)
+; Relies on thunderclap being instrument $1C (5 in OpenMPT)
+org $CFAF3C
+dw $4336
+db $1C,$E0,$0A,$A7,$30, $FF
+
+; Sword raising sound effect (Sound 4Fh library 2)
+; A lounder version of Library 1 sound 3B "Going from world map to area map when loading saved game"
+org $CFADCF
+dw $41C9
+db $05,$F8,$0A,$8C,$04, $F5,$E0,$DC, $05,$F8,$0A,$8C,$28, $FF
