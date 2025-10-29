@@ -25,6 +25,8 @@ lorom
 !floatState = $0FB0         ; A variable used to determine which direction the boss is floating in and how quickly
 !paletteIndex = $0FB2       ; A variable used to determine which palette the boss should be using
 
+!swordSoundTracker = $0FEA
+
 !HPComparitor = EnemyHeaders_BossHeader+4    ; A variable used to store the initial max HP of the boss to compare it with the current HP for speed calculations
 
 !projectileTimer = $19DF    ; The timer variable for enemy projectiles
@@ -46,7 +48,6 @@ lorom
 !SwordThrustSound = #$0048
 !SwordHitSound = #$0025
 !SwordReturnSound = #$004F
-!SwordSpawnSound = #$000F
 !ShieldHitSound = #$0025
 !Thunderclap = #$0060
 
@@ -519,7 +520,6 @@ LDA #$2000 : STA $1006                  ; Make shield tangible and visible
 LDA #$0048 : STA !minDis                ; Set the default minimum distance the boss can be from the walls
 LDA #$0020 : STA !floatState            ; Set the default float state to moving down at full speed, slowing down
 LDA !Thunderclap : JSL $8090A3          ; Play thunderclap sound effect
-LDA !SwordSpawnSound : JSL $809125      ; Play sword spawning sound effect
 RTL
 ..Run_Text
     LDX $0E54                           ; Loads Current enemy in room
@@ -592,7 +592,6 @@ BRA ..End
 LDA #$0040 : STA !timer                  ; set timer to 40
 LDA #.INSTLISTS_SPAWNING : STA $0F92     ; Load spawning spritemap
 LDA #$0001 : STA $0F94                   ; Set spritemap timer to 1
-LDA !SwordSpawnSound : JSL $809125       ; Play sword spawning sound effect
 
 ..End
 DEC !timer                               ; Decrement Timer
@@ -1340,7 +1339,7 @@ RTS
 ..StartPrep
 LDA $0F7E : STA !returnHeight,x ; Store enemy 0 Y position to memory. This will be the return height
 LDA #$FD00 : STA $1ADB,x        ; Upward Speed = FD Pixels and 00 Subpixels. Store to projectile Y velocity
-LDX $0E54 : STZ $0FAA,x         ; Reset the collision sound tracker
+STZ !swordSoundTracker          ; Reset the collision sound tracker
 RTS
 
 ..AttackPrep
@@ -1361,12 +1360,11 @@ RTS
 ..Downward
 TYX
 JSR $897B                                ; Move enemy down by previously-determined speed
-BCC ...NoHit
-LDY $0E54                                ; Load enemy index
-LDA $0FAA,y                              ; Check to see if sound has already been made
+BCC ...NoHit                             ; Load enemy index
+LDA !swordSoundTracker                   ; Check to see if sound has already been made
 BNE ...NoHit
 LDA !SwordHitSound                       ; Load sword-hitting-ground sound
-STA $0FAA,y                              ; Store nonzero value to variable to indicate sound has been made
+STA !swordSoundTracker                   ; Store nonzero value to variable to indicate sound has been made
 JSL $8090A3                              ; Play the sound
 ...NoHit
 RTS
