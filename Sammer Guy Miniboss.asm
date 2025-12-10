@@ -63,7 +63,7 @@ print pc, " - Sword Enemy Header"
 ;       Palette             Damage        Y Radius        Hurt AI Time   Boss Value          Number of parts  Main AI              Hurt AI       Xray AI      Unused         PB AI        Unused       Touch AI        Unused                Layer Priority          Weakness Pointer
 ;GFX Size |          Health |      X Radius  |       AI Bank |     Hurt SFX  |  Setup           |   Unused    |         Grapple AI |  Frozen AI  | Death Anim. |   Unused    |   Unknown   |   Unused    |   Shot AI   |   GFX Address           | Drops Pointer       |          Name Pointer
 ;  |      |          |      |      |      |          |    |        |      |      |              |      |      |             |      |      |      |      |      |      |      |      |      |      |      |      |      |          |              |        |            |           |
-DW $0400, Sword_PAL, $0100, $0048, $0004, $0010 : DB $A3, $00 : DW $0000, $0000, Sword_SETUPAI, $0001, $0000, Sword_MAINAI, $804C, $804C, $8041, $0000, $0000, $0000, $0000, $804C, $0000, $0000, $0000, $8023, $802D, $0000 : DL GFX_Sword : DB $02 : DW DROPS_Sword, WEAK_Sword, $E1DB
+DW $0400, Sword_PAL, $0100, $0048, $0004, $000F : DB $A3, $00 : DW $0000, $0000, Sword_SETUPAI, $0001, $0000, Sword_MAINAI, $804C, $804C, $8041, $0000, $0000, $0000, $0000, $804C, $0000, $0000, $0000, $8023, $802D, $0000 : DL GFX_Sword : DB $02 : DW DROPS_Sword, WEAK_Sword, $E1DB
 
 .BossHeader
 print pc, " - Boss Enemy Header"
@@ -77,7 +77,7 @@ print pc, " - Shield Enemy Header"
 ;       Palette              Damage        Y Radius        Hurt AI Time   Boss Value           Number of parts  Main AI               Hurt AI       Xray AI      Unused         PB AI        Unused       Touch AI        Unused                 Layer Priority           Weakness Pointer
 ;GFX Size |           Health |      X Radius  |       AI Bank |     Hurt SFX  |  Setup            |   Unused    |          Grapple AI |  Frozen AI  | Death Anim. |   Unused    |   Unknown   |   Unused    |   Shot AI   |   GFX Address            | Drops Pointer        |           Name Pointer
 ;  |      |           |      |      |      |          |    |        |      |      |               |      |      |              |      |      |      |      |      |      |      |      |      |      |      |      |      |          |               |        |             |            |
-DW $0200, Shield_PAL, $0100, $0064, $0012, $0004 : DB $A4, $00 : DW $0000, $0000, Shield_SETUPAI, $0001, $0000, Shield_MAINAI, $804C, $804C, $8041, $0000, $0000, $0000, $0000, $804C, $0000, $0000, $0000, $8023, $802D, $0000 : DL GFX_Shield : DB $02 : DW DROPS_Shield, WEAK_Shield, $E1DB
+DW $0200, Shield_PAL, $0100, $0064, $0012, $0005 : DB $A4, $00 : DW $0000, $0000, Shield_SETUPAI, $0001, $0000, Shield_MAINAI, $804C, $804C, $8041, $0000, $0000, $0000, $0000, $804C, $0000, $0000, $0000, $8023, $802D, $0000 : DL GFX_Shield : DB $02 : DW DROPS_Shield, WEAK_Shield, $E1DB
 
 .ShurikenHeader
 print pc, " - Shuriken Enemy Header"
@@ -240,7 +240,7 @@ DW $81F8 : DB $F0 : DW $2100    ; Top
 DW $81F8 : DB $00 : DW $2102    ; Bottom
 
 .PAL
-DW $0000,$339F,$1F5E,$0EDF,$065C,$7F7C,$7B39,$76F6,$30C6,$1CEC,$0846,$0000,$0000,$0000,$0000,$0000
+DW $0000,$339F,$1F5E,$0EDF,$065C,$7F7C,$7B39,$76F6,$72B3,$4929,$4108,$38E7,$30C6,$1CEC,$18CA,$0846
 }
 
 ; State Table:
@@ -724,17 +724,14 @@ DW $0010, .SPM_IDLE1, !sleep
 print pc, " - Boss Spritemaps"
 {
 ..IDLE1
-DW $0013
+DW $0010
 
 DW $0009 : DB $F8 : DW $6106    ; Far right mustache
 DW $0001 : DB $F8 : DW $6107    ; Near right mustache
 DW $01EF : DB $F8 : DW $2106    ; Far left mustache
 DW $01F7 : DB $F8 : DW $2107    ; Near left mustache
 
-DW $0000 : DB $F4 : DW $6102    ; Upper right face
-DW $01F8 : DB $F4 : DW $2102    ; Upper left face
-DW $0000 : DB $FC : DW $6112    ; Lower right face
-DW $01F8 : DB $FC : DW $2112    ; Lower left face
+DW $81F8 : DB $F4 : DW $2102    ; Face
 
 DW $8000 : DB $EC : DW $6100    ; Top Right helmet
 DW $0008 : DB $FC : DW $6116    ; Right helmet base
@@ -742,28 +739,25 @@ DW $0008 : DB $FC : DW $6116    ; Right helmet base
 DW $81F0 : DB $EC : DW $2100    ; Top Left helmet
 DW $01F0 : DB $FC : DW $2116    ; Left helmet base
 
-DW $0000 : DB $FF : DW $6105    ; Right shoulder
-DW $01F8 : DB $FF : DW $2105    ; Left shoulder
-DW $0007 : DB $07 : DW $6115    ; Right hand
-DW $01F1 : DB $07 : DW $2115    ; Left hand
+DW $0000 : DB $FF : DW $610D    ; Right shoulder
+DW $01F8 : DB $FF : DW $210D    ; Left shoulder
+DW $0007 : DB $07 : DW $611D    ; Right hand
+DW $01F1 : DB $07 : DW $211D    ; Left hand
 
-DW $81F8 : DB $02 : DW $2103    ; Body
+DW $81F8 : DB $02 : DW $2104    ; Body
 
 DW $0002 : DB $0B : DW $6117    ; Right foot
 DW $01F6 : DB $0B : DW $2117    ; Left foot
 
 ..IDLE2
-DW $0013
+DW $0010
 
 DW $0009 : DB $F9 : DW $6106    ; Far right mustache
 DW $0001 : DB $F9 : DW $6107    ; Near right mustache
 DW $01EF : DB $F9 : DW $2106    ; Far left mustache
 DW $01F7 : DB $F9 : DW $2107    ; Near left mustache
 
-DW $0000 : DB $F5 : DW $6102    ; Upper right face
-DW $01F8 : DB $F5 : DW $2102    ; Upper left face
-DW $0000 : DB $FD : DW $6112    ; Lower right face
-DW $01F8 : DB $FD : DW $2112    ; Lower left face
+DW $81F8 : DB $F5 : DW $2102    ; Face
 
 DW $8000 : DB $ED : DW $6100    ; Top Right helmet
 DW $0008 : DB $FD : DW $6116    ; Right helmet base
@@ -771,28 +765,27 @@ DW $0008 : DB $FD : DW $6116    ; Right helmet base
 DW $81F0 : DB $ED : DW $2100    ; Top Left helmet
 DW $01F0 : DB $FD : DW $2116    ; Left helmet base
 
-DW $0000 : DB $FF : DW $6105    ; Right shoulder
-DW $01F8 : DB $FF : DW $2105    ; Left shoulder
-DW $0007 : DB $07 : DW $6115    ; Right hand
-DW $01F1 : DB $07 : DW $2115    ; Left hand
+DW $0000 : DB $FF : DW $610D    ; Right shoulder
+DW $01F8 : DB $FF : DW $210D    ; Left shoulder
+DW $0007 : DB $07 : DW $611D    ; Right hand
+DW $01F1 : DB $07 : DW $211D    ; Left hand
 
-DW $81F8 : DB $02 : DW $2103    ; Body
+DW $81F8 : DB $02 : DW $2104    ; Body
 
 DW $0002 : DB $0B : DW $6117    ; Right foot
 DW $01F6 : DB $0B : DW $2117    ; Left foot
 
 ..EXTENDING
-DW $0013
+DW $0012
 
 DW $0009 : DB $F9 : DW $6106    ; Far right mustache
 DW $0001 : DB $F9 : DW $6107    ; Near right mustache
 DW $01EF : DB $F9 : DW $2106    ; Far left mustache
 DW $01F7 : DB $F9 : DW $2107    ; Near left mustache
 
-DW $0000 : DB $F5 : DW $6118    ; Upper right face (Eyes closing)
+DW $0000 : DB $F5 : DW $211E    ; Upper right face (Eyes closing)
 DW $01F8 : DB $F5 : DW $2118    ; Upper left face (Eyes closing)
-DW $0000 : DB $FD : DW $6112    ; Lower right face
-DW $01F8 : DB $FD : DW $2112    ; Lower left face
+DW $81F8 : DB $F5 : DW $2102    ; Face
 
 DW $8000 : DB $ED : DW $6100    ; Top Right helmet
 DW $0008 : DB $FD : DW $6116    ; Right helmet base
@@ -805,23 +798,22 @@ DW $01F6 : DB $00 : DW $210A    ; Left shoulder (extending)
 DW $000A : DB $05 : DW $611A    ; Right hand (extending)
 DW $01EE : DB $05 : DW $211A    ; Left hand (extending)
 
-DW $81F8 : DB $02 : DW $2103    ; Body
+DW $81F8 : DB $02 : DW $2104    ; Body
 
 DW $0002 : DB $0B : DW $6117    ; Right foot
 DW $01F6 : DB $0B : DW $2117    ; Left foot
 
 ..EXTENDED
-DW $0013
+DW $0012
 
 DW $0009 : DB $F9 : DW $6106    ; Far right mustache
 DW $0001 : DB $F9 : DW $6107    ; Near right mustache
 DW $01EF : DB $F9 : DW $2106    ; Far left mustache
 DW $01F7 : DB $F9 : DW $2107    ; Near left mustache
 
-DW $0000 : DB $F5 : DW $6108    ; Upper right face (Eyes closed)
+DW $0000 : DB $F5 : DW $210E    ; Upper right face (Eyes closed)
 DW $01F8 : DB $F5 : DW $2108    ; Upper left face (Eyes closed)
-DW $0000 : DB $FD : DW $6112    ; Lower right face
-DW $01F8 : DB $FD : DW $2112    ; Lower left face
+DW $81F8 : DB $F5 : DW $2102    ; Face
 
 DW $8000 : DB $ED : DW $6100    ; Top Right helmet
 DW $0008 : DB $FD : DW $6116    ; Right helmet base
@@ -834,23 +826,20 @@ DW $01F5 : DB $00 : DW $2109    ; Left shoulder (extended)
 DW $000A : DB $02 : DW $6119    ; Right hand (extended)
 DW $01EE : DB $02 : DW $2119    ; Left hand (extended)
 
-DW $81F8 : DB $02 : DW $2103    ; Body
+DW $81F8 : DB $02 : DW $2104    ; Body
 
 DW $0002 : DB $0B : DW $6117    ; Right foot
 DW $01F6 : DB $0B : DW $2117    ; Left foot
 
 ..RAISING
-DW $0013
+DW $0010
 
 DW $0009 : DB $F8 : DW $610B    ; Far right mustache (raised)
 DW $0001 : DB $F8 : DW $610C    ; Near right mustache (raised)
 DW $01EF : DB $F8 : DW $210B    ; Far left mustache (raised)
 DW $01F7 : DB $F8 : DW $210C    ; Near left mustache (raised)
 
-DW $0000 : DB $F4 : DW $6102    ; Upper right face
-DW $01F8 : DB $F4 : DW $2102    ; Upper left face
-DW $0000 : DB $FC : DW $6112    ; Lower right face
-DW $01F8 : DB $FC : DW $2112    ; Lower left face
+DW $81F8 : DB $F4 : DW $2102    ; Face
 
 DW $8000 : DB $EC : DW $6100    ; Top Right helmet
 DW $0008 : DB $FC : DW $6116    ; Right helmet base
@@ -858,28 +847,25 @@ DW $0008 : DB $FC : DW $6116    ; Right helmet base
 DW $81F0 : DB $EC : DW $2100    ; Top Left helmet
 DW $01F0 : DB $FC : DW $2116    ; Left helmet base
 
-DW $0000 : DB $FE : DW $6105    ; Right shoulder
-DW $01F8 : DB $FE : DW $2105    ; Left shoulder
-DW $0007 : DB $06 : DW $6115    ; Right hand
-DW $01F1 : DB $06 : DW $2115    ; Left hand
+DW $0000 : DB $FE : DW $610D    ; Right shoulder
+DW $01F8 : DB $FE : DW $210D    ; Left shoulder
+DW $0007 : DB $06 : DW $611D    ; Right hand
+DW $01F1 : DB $06 : DW $211D    ; Left hand
 
-DW $81F8 : DB $02 : DW $2103    ; Body
+DW $81F8 : DB $02 : DW $2104    ; Body
 
 DW $0002 : DB $0B : DW $6117    ; Right foot
 DW $01F6 : DB $0B : DW $2117    ; Left foot
 
 ..RAISING2
-DW $0013
+DW $0010
 
 DW $0009 : DB $F8 : DW $610B    ; Far right mustache (raised)
 DW $0001 : DB $F8 : DW $610C    ; Near right mustache (raised)
 DW $01EF : DB $F8 : DW $210B    ; Far left mustache (raised)
 DW $01F7 : DB $F8 : DW $210C    ; Near left mustache (raised)
 
-DW $0000 : DB $F4 : DW $6102    ; Upper right face
-DW $01F8 : DB $F4 : DW $2102    ; Upper left face
-DW $0000 : DB $FC : DW $6112    ; Lower right face
-DW $01F8 : DB $FC : DW $2112    ; Lower left face
+DW $81F8 : DB $F4 : DW $2102    ; Face
 
 DW $8000 : DB $EC : DW $6100    ; Top Right helmet
 DW $0008 : DB $FC : DW $6116    ; Right helmet base
@@ -892,23 +878,20 @@ DW $01F7 : DB $FE : DW $210A    ; Left shoulder (extending)
 DW $0008 : DB $04 : DW $611A    ; Right hand (extending)
 DW $01F0 : DB $04 : DW $211A    ; Left hand (extending)
 
-DW $81F8 : DB $02 : DW $2103    ; Body
+DW $81F8 : DB $02 : DW $2104    ; Body
 
 DW $0002 : DB $0B : DW $6117    ; Right foot
 DW $01F6 : DB $0B : DW $2117    ; Left foot
 
 ..THRUSTING
-DW $0013
+DW $0010
 
 DW $0009 : DB $F9 : DW $6106    ; Far right mustache
 DW $0001 : DB $F9 : DW $6107    ; Near right mustache
 DW $01EF : DB $F9 : DW $2106    ; Far left mustache
 DW $01F7 : DB $F9 : DW $2107    ; Near left mustache
 
-DW $0000 : DB $F5 : DW $6102    ; Upper right face
-DW $01F8 : DB $F5 : DW $2102    ; Upper left face
-DW $0000 : DB $FD : DW $6112    ; Lower right face
-DW $01F8 : DB $FD : DW $2112    ; Lower left face
+DW $81F8 : DB $F5 : DW $2102    ; Face
 
 DW $8000 : DB $ED : DW $6100    ; Top Right helmet
 DW $0008 : DB $FD : DW $6116    ; Right helmet base
@@ -916,28 +899,25 @@ DW $0008 : DB $FD : DW $6116    ; Right helmet base
 DW $81F0 : DB $ED : DW $2100    ; Top Left helmet
 DW $01F0 : DB $FD : DW $2116    ; Left helmet base
 
-DW $0000 : DB $FF : DW $6105    ; Right shoulder
-DW $01F8 : DB $FF : DW $2105    ; Left shoulder
+DW $0000 : DB $FF : DW $610D    ; Right shoulder
+DW $01F8 : DB $FF : DW $210D    ; Left shoulder
 DW $0007 : DB $07 : DW $611B    ; Right hand (Thrusting)
 DW $01F1 : DB $07 : DW $211B    ; Left hand (Thrusting)
 
-DW $81F8 : DB $02 : DW $2103    ; Body
+DW $81F8 : DB $02 : DW $2104    ; Body
 
 DW $0002 : DB $0B : DW $6117    ; Right foot
 DW $01F6 : DB $0B : DW $2117    ; Left foot
 
 ..THRUSTING2
-DW $0013
+DW $0010
 
 DW $0009 : DB $FA : DW $6106    ; Far right mustache
 DW $0001 : DB $FA : DW $6107    ; Near right mustache
 DW $01EF : DB $FA : DW $2106    ; Far left mustache
 DW $01F7 : DB $FA : DW $2107    ; Near left mustache
 
-DW $0000 : DB $F6 : DW $6102    ; Upper right face
-DW $01F8 : DB $F6 : DW $2102    ; Upper left face
-DW $0000 : DB $FE : DW $6112    ; Lower right face
-DW $01F8 : DB $FE : DW $2112    ; Lower left face
+DW $81F8 : DB $F6 : DW $2102    ; Face
 
 DW $8000 : DB $EE : DW $6100    ; Top Right helmet
 DW $0008 : DB $FE : DW $6116    ; Right helmet base
@@ -945,28 +925,25 @@ DW $0008 : DB $FE : DW $6116    ; Right helmet base
 DW $81F0 : DB $EE : DW $2100    ; Top Left helmet
 DW $01F0 : DB $FE : DW $2116    ; Left helmet base
 
-DW $0000 : DB $00 : DW $6105    ; Right shoulder
-DW $01F8 : DB $00 : DW $2105    ; Left shoulder
+DW $0000 : DB $00 : DW $610D    ; Right shoulder
+DW $01F8 : DB $00 : DW $210D    ; Left shoulder
 DW $0007 : DB $08 : DW $611B    ; Right hand (Thrusting)
 DW $01F1 : DB $08 : DW $211B    ; Left hand (Thrusting)
 
-DW $81F8 : DB $03 : DW $2103    ; Body
+DW $81F8 : DB $03 : DW $2104    ; Body
 
 DW $0002 : DB $0B : DW $6117    ; Right foot
 DW $01F6 : DB $0B : DW $2117    ; Left foot
 
 ..LEFTGRAB1
-DW $0013
+DW $0010
 
 DW $0009 : DB $F8 : DW $6106    ; Far right mustache
 DW $0001 : DB $F8 : DW $6107    ; Near right mustache
 DW $01EF : DB $F8 : DW $2106    ; Far left mustache
 DW $01F7 : DB $F8 : DW $2107    ; Near left mustache
 
-DW $0000 : DB $F4 : DW $6102    ; Upper right face
-DW $01F8 : DB $F4 : DW $2102    ; Upper left face
-DW $0000 : DB $FC : DW $6112    ; Lower right face
-DW $01F8 : DB $FC : DW $2112    ; Lower left face
+DW $81F8 : DB $F4 : DW $2102    ; Face
 
 DW $8000 : DB $EC : DW $6100    ; Top Right helmet
 DW $0008 : DB $FC : DW $6116    ; Right helmet base
@@ -974,11 +951,11 @@ DW $0008 : DB $FC : DW $6116    ; Right helmet base
 DW $81F0 : DB $EC : DW $2100    ; Top Left helmet
 DW $01F0 : DB $FC : DW $2116    ; Left helmet base
 
-DW $0000 : DB $FF : DW $6105    ; Right shoulder
-DW $0007 : DB $07 : DW $6115    ; Right hand
-DW $01F8 : DB $FF : DW $2105    ; Left shoulder
+DW $0000 : DB $FF : DW $610D    ; Right shoulder
+DW $0007 : DB $07 : DW $611D    ; Right hand
+DW $01F8 : DB $FF : DW $210D    ; Left shoulder
 
-DW $81F8 : DB $02 : DW $2103    ; Body
+DW $81F8 : DB $02 : DW $2104    ; Body
 
 DW $01F1 : DB $07 : DW $211B    ; Left hand (Thrusting)
 
@@ -986,17 +963,14 @@ DW $0002 : DB $0B : DW $6117    ; Right foot
 DW $01F6 : DB $0B : DW $2117    ; Left foot
 
 ..LEFTGRAB2
-DW $0013
+DW $0010
 
 DW $0009 : DB $F8 : DW $6106    ; Far right mustache
 DW $0001 : DB $F8 : DW $6107    ; Near right mustache
 DW $01EF : DB $F8 : DW $2106    ; Far left mustache
 DW $01F7 : DB $F8 : DW $2107    ; Near left mustache
 
-DW $0000 : DB $F4 : DW $6102    ; Upper right face
-DW $01F8 : DB $F4 : DW $2102    ; Upper left face
-DW $0000 : DB $FC : DW $6112    ; Lower right face
-DW $01F8 : DB $FC : DW $2112    ; Lower left face
+DW $81F8 : DB $F4 : DW $2102    ; Face
 
 DW $8000 : DB $EC : DW $6100    ; Top Right helmet
 DW $0008 : DB $FC : DW $6116    ; Right helmet base
@@ -1004,11 +978,11 @@ DW $0008 : DB $FC : DW $6116    ; Right helmet base
 DW $81F0 : DB $EC : DW $2100    ; Top Left helmet
 DW $01F0 : DB $FC : DW $2116    ; Left helmet base
 
-DW $0000 : DB $FF : DW $6105    ; Right shoulder
-DW $0007 : DB $07 : DW $6115    ; Right hand
-DW $01F8 : DB $FF : DW $2105    ; Left shoulder
+DW $0000 : DB $FF : DW $610D    ; Right shoulder
+DW $0007 : DB $07 : DW $611D    ; Right hand
+DW $01F8 : DB $FF : DW $210D    ; Left shoulder
 
-DW $81F8 : DB $02 : DW $2103    ; Body
+DW $81F8 : DB $02 : DW $2104    ; Body
 
 DW $01F3 : DB $07 : DW $211C    ; Left hand (Down)
 
@@ -1016,17 +990,14 @@ DW $0002 : DB $0B : DW $6117    ; Right foot
 DW $01F6 : DB $0B : DW $2117    ; Left foot
 
 ..RIGHTGRAB1
-DW $0013
+DW $0010
 
 DW $0009 : DB $F8 : DW $6106    ; Far right mustache
 DW $0001 : DB $F8 : DW $6107    ; Near right mustache
 DW $01EF : DB $F8 : DW $2106    ; Far left mustache
 DW $01F7 : DB $F8 : DW $2107    ; Near left mustache
 
-DW $0000 : DB $F4 : DW $6102    ; Upper right face
-DW $01F8 : DB $F4 : DW $2102    ; Upper left face
-DW $0000 : DB $FC : DW $6112    ; Lower right face
-DW $01F8 : DB $FC : DW $2112    ; Lower left face
+DW $81F8 : DB $F4 : DW $2102    ; Face
 
 DW $8000 : DB $EC : DW $6100    ; Top Right helmet
 DW $0008 : DB $FC : DW $6116    ; Right helmet base
@@ -1034,11 +1005,11 @@ DW $0008 : DB $FC : DW $6116    ; Right helmet base
 DW $81F0 : DB $EC : DW $2100    ; Top Left helmet
 DW $01F0 : DB $FC : DW $2116    ; Left helmet base
 
-DW $0000 : DB $FF : DW $6105    ; Right shoulder
-DW $01F8 : DB $FF : DW $2105    ; Left shoulder
-DW $01F1 : DB $07 : DW $2115    ; Left hand
+DW $0000 : DB $FF : DW $610D    ; Right shoulder
+DW $01F8 : DB $FF : DW $210D    ; Left shoulder
+DW $01F1 : DB $07 : DW $211D    ; Left hand
 
-DW $81F8 : DB $02 : DW $2103    ; Body
+DW $81F8 : DB $02 : DW $2104    ; Body
 
 DW $0007 : DB $07 : DW $611B    ; Right hand (Thrusting)
 
@@ -1046,17 +1017,14 @@ DW $0002 : DB $0B : DW $6117    ; Right foot
 DW $01F6 : DB $0B : DW $2117    ; Left foot
 
 ..RIGHTGRAB2
-DW $0013
+DW $0010
 
 DW $0009 : DB $F8 : DW $6106    ; Far right mustache
 DW $0001 : DB $F8 : DW $6107    ; Near right mustache
 DW $01EF : DB $F8 : DW $2106    ; Far left mustache
 DW $01F7 : DB $F8 : DW $2107    ; Near left mustache
 
-DW $0000 : DB $F4 : DW $6102    ; Upper right face
-DW $01F8 : DB $F4 : DW $2102    ; Upper left face
-DW $0000 : DB $FC : DW $6112    ; Lower right face
-DW $01F8 : DB $FC : DW $2112    ; Lower left face
+DW $81F8 : DB $F4 : DW $2102    ; Face
 
 DW $8000 : DB $EC : DW $6100    ; Top Right helmet
 DW $0008 : DB $FC : DW $6116    ; Right helmet base
@@ -1064,11 +1032,11 @@ DW $0008 : DB $FC : DW $6116    ; Right helmet base
 DW $81F0 : DB $EC : DW $2100    ; Top Left helmet
 DW $01F0 : DB $FC : DW $2116    ; Left helmet base
 
-DW $0000 : DB $FF : DW $6105    ; Right shoulder
-DW $01F1 : DB $07 : DW $2115    ; Left hand
-DW $01F8 : DB $FF : DW $2105    ; Left shoulder
+DW $0000 : DB $FF : DW $610D    ; Right shoulder
+DW $01F1 : DB $07 : DW $211D    ; Left hand
+DW $01F8 : DB $FF : DW $210D    ; Left shoulder
 
-DW $81F8 : DB $02 : DW $2103    ; Body
+DW $81F8 : DB $02 : DW $2104    ; Body
 
 DW $0005 : DB $07 : DW $611C    ; Right hand (Down)
 
@@ -1076,20 +1044,20 @@ DW $0002 : DB $0B : DW $6117    ; Right foot
 DW $01F6 : DB $0B : DW $2117    ; Left foot
 }
 .PAL
-DW $3800, $6A0C, $59CB, $458A, $0000, $4275, $3612, $08A7, $0844, $335C, $7FFF, $0000, $0000, $0000, $0000, $0000
+dw $3800, $620C, $59CB, $458A, $3149, $4275, $3612, $29AF, $0000, $08A7, $0886, $0844, $0000, $335C, $2F1A, $7FFF
 
 .PALTHRESHOLDS
 dw $0E00, $0C00, $0A00, $0800, $0600, $0400, $0200, $0000, $FFFF  ; Terminator
 
 .HEALTHPALETTES
-dw $3800, $6A0C, $59CB, $458A, $0000, $4275, $3612, $08A7, $0844, $335C, $7FFF, $0000, $0000, $0000, $0000, $0000
-dw $3800, $5DCE, $4D8C, $3D4B, $0000, $4274, $3611, $08A7, $0844, $3B5C, $7FFF, $0000, $0000, $0000, $0000, $0000
-dw $3800, $51B0, $456E, $352C, $0000, $4673, $3A10, $08A7, $0844, $435C, $7FFF, $0000, $0000, $0000, $0000, $0000
-dw $3800, $4992, $392F, $2CED, $0000, $4A72, $3E0F, $08A7, $0844, $4B5C, $7FFF, $0000, $0000, $0000, $0000, $0000
-dw $3800, $3D74, $3111, $24CF, $0000, $4E71, $420E, $08A7, $0844, $537C, $7FFF, $0000, $0000, $0000, $0000, $0000
-dw $3800, $3156, $24D3, $1CB0, $0000, $4E70, $420D, $08A7, $0844, $5B7C, $7FFF, $0000, $0000, $0000, $0000, $0000
-dw $3800, $2938, $1CB4, $1471, $0000, $526F, $460C, $08A7, $0844, $637C, $7FFF, $0000, $0000, $0000, $0000, $0000
-dw $3800, $14FC, $0858, $0434, $0000, $5A6E, $4E0B, $08A7, $0844, $739C, $7FFF, $0000, $0000, $0000, $0000, $0000
+dw $3800, $620C, $59CB, $458A, $3149, $4275, $3612, $29AF, $0000, $08A7, $0886, $0844, $0000, $335C, $2F1A, $7FFF
+dw $3800, $55CD, $4D8C, $3D4B, $2909, $4274, $3611, $29AE, $0000, $08A7, $0886, $0844, $0000, $3B5C, $331A, $7FFF
+dw $3800, $4DAF, $456E, $352C, $24EA, $4673, $3A10, $2DAD, $0000, $08A7, $0886, $0844, $0000, $435C, $3B1A, $7FFF
+dw $3800, $4191, $392F, $2CED, $1CCB, $4A72, $3E0F, $31AC, $0000, $08A7, $0886, $0844, $0000, $4B5C, $431A, $7FFF
+dw $3800, $3973, $3111, $24CF, $18AC, $4E71, $420E, $35AB, $0000, $08A7, $0886, $0844, $0000, $537C, $4B3A, $7FFF
+dw $3800, $3154, $24D3, $1CB0, $148D, $4E70, $420D, $35AA, $0000, $08A7, $0886, $0844, $0000, $5B7C, $533A, $7FFF
+dw $3800, $2536, $1CB4, $1471, $0C6E, $526F, $460C, $39A9, $0000, $08A7, $0886, $0844, $0000, $637C, $5B3A, $7FFF
+dw $3800, $14FA, $0858, $0434, $0430, $5A6E, $4E0B, $41A8, $0000, $08A7, $0886, $0844, $0000, $739C, $6B5A, $7FFF
 }
 
 org !A4Free

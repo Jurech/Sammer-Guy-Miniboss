@@ -317,7 +317,7 @@ namespace "SAMMERGUY_"									;namespace puts additional tags before the lables
 	DB END-START/7	;don't touch this, it calculates the value everytime by itself!!
 													;actually read by xkas as "ROOM1_END-ROOM1_START/7", also left to right math
 START:												;actually read by xkas as "ROOM1_START"
-	DB $0A, $00 : DW $0094 : DB $01, $07, $06		;Glow white outline of Sammer Guy
+	DB $0A, $00 : DW $009C : DB $01, $07, $06		;Glow white outline of Sammer Guy
 	DB $05, $01 : DW $00B1 : DB $03, $07, $09		;Glowing shield
 											;see 'Palette Table.png'
 											;substract ($01) green ($02) every $04 frames, do that $08 times, then add green again every 4 frames, 8 times
